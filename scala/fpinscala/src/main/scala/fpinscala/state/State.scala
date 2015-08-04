@@ -80,7 +80,7 @@ object RNG {
     go(count, rng, List())
   }
 
-  type Rand[+A] = RNG => (A, RNG)
+  type Rand[+A] = RNG => (A, RNG) //b: here defined type Rand as a function (RNG)->(a, RNG)
 
   val int: Rand[Int] = _.nextInt
 
