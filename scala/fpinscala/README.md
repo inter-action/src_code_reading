@@ -1,3 +1,3 @@
 [orgin repo](https://github.com/fpinscala/fpinscala)
 
-book manning-functional programming in scala
+[manning: functional programming in scala](http://www.manning.com/bjarnason/)
