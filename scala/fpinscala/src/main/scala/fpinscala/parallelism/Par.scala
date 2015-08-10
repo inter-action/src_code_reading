@@ -73,31 +73,36 @@ object Par {
   }
 
   def equal[A](e: ExecutorService)(p: Par[A], p2: Par[A]): Boolean =
-    p(e).get == p2(e).get
+    p(e).get == p2(e).get //:?: scala == , when == stands
 
   def delay[A](fa: => Par[A]): Par[A] =
     es => fa(es)
 
+  // if cond stand, return t else return f
   def choice[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] =
     es =>
       if (run(es)(cond).get) t(es) // Notice we are blocking on the result of `cond`.
       else f(es)
 
+  // get result of choices at the index of n on final evalution.
   def choiceN[A](n: Par[Int])(choices: List[Par[A]]): Par[A] =
     es => {
       val ind = run(es)(n).get // Full source files
       run(es)(choices(ind))
     }
 
+  // same func with choiceN
   def choiceViaChoiceN[A](a: Par[Boolean])(ifTrue: Par[A], ifFalse: Par[A]): Par[A] =
     choiceN(map(a)(b => if (b) 0 else 1))(List(ifTrue, ifFalse))
 
+  // get choice value via key
   def choiceMap[K,V](key: Par[K])(choices: Map[K,Par[V]]): Par[V] =
     es => {
       val k = run(es)(key).get
       run(es)(choices(k))
     }
 
+  // choices(A)
   def chooser[A,B](p: Par[A])(choices: A => Par[B]): Par[B] =
     es => {
       val k = run(es)(p).get
@@ -118,16 +123,17 @@ object Par {
     flatMap(p)(i => choices(i))
 
   // see nonblocking implementation in `Nonblocking.scala`
-  def join[A](a: Par[Par[A]]): Par[A] =
+  def join[A](a: Par[Par[A]]): Par[A] =// flat Par[Par[A]] to Par[A]
     es => run(es)(run(es)(a).get())
 
   def joinViaFlatMap[A](a: Par[Par[A]]): Par[A] =
     flatMap(a)(x => x)
 
   def flatMapViaJoin[A,B](p: Par[A])(f: A => Par[B]): Par[B] =
-    join(map(p)(f))
+    join(map(p)(f)) //:b: map(p)(f) return Par[Par[B]]
+
   /* Gives us infix syntax for `Par`. */
-  implicit def toParOps[A](p: Par[A]): ParOps[A] = new ParOps(p)
+  implicit def toParOps[A](p: Par[A]): ParOps[A] = new ParOps(p)//:?: what this implicit defination does
 
   class ParOps[A](p: Par[A]) {
 
