@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference
 object Nonblocking {
 
   trait Future[+A] {
-    private[parallelism] def apply(k: A => Unit): Unit
+    private[parallelism] def apply(k: A => Unit): Unit //:b: package private
   }
 
   type Par[+A] = ExecutorService => Future[A]
@@ -16,6 +16,7 @@ object Nonblocking {
     def run[A](es: ExecutorService)(p: Par[A]): A = {
       val ref = new java.util.concurrent.atomic.AtomicReference[A] // A mutable, threadsafe reference, to use for storing the result
       val latch = new CountDownLatch(1) // A latch which, when decremented, implies that `ref` has the result
+      // :?: how futrue related to es.
       p(es) { a => ref.set(a); latch.countDown } // Asynchronously set the result, and decrement the latch
       latch.await // Block until the `latch.countDown` is invoked asynchronously
       ref.get // Once we've passed the latch, we know `ref` has been set, and return its value
@@ -28,6 +29,8 @@ object Nonblocking {
       }
 
     /** A non-strict version of `unit` */
+    // :b: notice the difference between func delay and unit, `a: => A` if a is func, a will not be evaluated at the time
+    // this func been called. on the contrary param in the func `unit` will be evaluated once this func been called
     def delay[A](a: => A): Par[A] =
       es => new Future[A] {
         def apply(cb: A => Unit): Unit =
@@ -57,22 +60,24 @@ object Nonblocking {
 
     def map2[A,B,C](p: Par[A], p2: Par[B])(f: (A,B) => C): Par[C] =
       es => new Future[C] {
-        def apply(cb: C => Unit): Unit = {
+        def apply(cb: C => Unit): Unit = {//由于这个函数什么也不返回,所以只有在回调cb执行的时候才有意义
           var ar: Option[A] = None
           var br: Option[B] = None
           // this implementation is a little too liberal in forking of threads -
           // it forks a new logical thread for the actor and for stack-safety,
           // forks evaluation of the callback `cb`
           val combiner = Actor[Either[A,B]](es) {
-            case Left(a) =>
-              if (br.isDefined) eval(es)(cb(f(a,br.get)))
-              else ar = Some(a)
-            case Right(b) =>
+            //this block of code passed as param handler of the class Actor's constructor
+            //这个地方由于有两个任务，两个任务还是异步的，所以不确定两个case哪个先完成
+            case Left(a) =>//左侧任务先执行完毕
+              if (br.isDefined) eval(es)(cb(f(a,br.get)))//如果br的结果页也获取到了, 执行回调
+              else ar = Some(a)//只有Left的结果执行完了, 将结果放到ar中
+            case Right(b) =>//右边任务先执行完毕
               if (ar.isDefined) eval(es)(cb(f(ar.get,b)))
               else br = Some(b)
           }
-          p(es)(a => combiner ! Left(a))
-          p2(es)(b => combiner ! Right(b))
+          p(es)(a => combiner ! Left(a))// a: A, p(es)->Future[A]
+          p2(es)(b => combiner ! Right(b))// b: B
         }
       }
 
