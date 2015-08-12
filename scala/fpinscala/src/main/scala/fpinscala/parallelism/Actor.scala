@@ -36,6 +36,14 @@ import annotation.tailrec
  * @param strategy Execution strategy, for example, a strategy that is backed by an `ExecutorService`
  * @tparam A       The type of messages accepted by this actor.
  */
+
+/*
+  @https://github.com/scalaz/scalaz/blob/scalaz-seven/concurrent/src/main/scala/scalaz/concurrent/Actor.scala
+    这段代码的实现的遍历的实现方式搞不懂, 感觉只能从head下遍历,而且只能是一个node。上边的nodes都遍历不到
+
+  这个并发的结构是怎么工作的
+  head 在任务执行完事之后有没有合理的重置回去
+ */
 final class Actor[A](strategy: Strategy)(handler: A => Unit, onError: Throwable => Unit = throw(_)) {
   self => // :?: 这是啥意思
 
@@ -70,14 +78,16 @@ final class Actor[A](strategy: Strategy)(handler: A => Unit, onError: Throwable 
 
   private def act() {
     val t = tail.get
-    val n = batchHandle(t, 1024)
-    if (n ne t) {
+    val n = batchHandle(t, 1024)//一次性处理1024个节点
+    if (n ne t) {//还有剩余的节点数(总的节点数-处理完的节点数)
       n.a = null.asInstanceOf[A]
-      tail.lazySet(n)//:?: head需要关联上把, 不关联上就无法继续添加任务了
-      schedule()// :?: 这个位置呢个继续往下执行
-    } else {
-      suspended.set(1)
-      if (n.get ne null) trySchedule()//如果 n.get != null 的话不继续执行
+      //:?: head需要关联上把, 不关联上就无法继续添加任务了 - 这个没有必要关联这个位置将剩余的节点的最尾部重新设置到tail上了
+      //所以head引用的位置并没有发生变化
+      tail.lazySet(n)
+      schedule()//这个位置呢个继续往下执行
+    } else {//到达尾部（tail）引用节点
+      suspended.set(1)// suspended == 1 && n.get == null 下面没有待处理的任务节点, 停止执行
+      if (n.get ne null) trySchedule()//尾部还有未处理的节点, 继续执行
     }
   }
 
