@@ -3,6 +3,12 @@ package fpinscala.parallelism
 import java.util.concurrent.{Callable, CountDownLatch, ExecutorService}
 import java.util.concurrent.atomic.AtomicReference
 
+/*
+TODOS
+  DONE:
+  PENDING:
+    Future 的并行计算是如何执行的
+ */
 object Nonblocking {
 
   trait Future[+A] {

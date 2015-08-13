@@ -42,7 +42,6 @@ import annotation.tailrec
     这段代码的实现的遍历的实现方式搞不懂, 感觉只能从head下遍历,而且只能是一个node。上边的nodes都遍历不到
 
   这个并发的结构是怎么工作的
-  head 在任务执行完事之后有没有合理的重置回去
  */
 final class Actor[A](strategy: Strategy)(handler: A => Unit, onError: Throwable => Unit = throw(_)) {
   self => // :?: 这是啥意思
