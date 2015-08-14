@@ -119,7 +119,7 @@ object Nonblocking {
       map(sequenceBalanced(as.toIndexedSeq))(_.toList)
 
     def parMap[A,B](as: List[A])(f: A => B): Par[List[B]] =
-      sequence(as.map(asyncF(f)))
+      sequence(as.map(asyncF(f)))// map 是evaluation on call, asyncF确保了f不会在map操作的时候执行, 因为asyncF返回的是闭包
 
     def parMap[A,B](as: IndexedSeq[A])(f: A => B): Par[IndexedSeq[B]] =
       sequenceBalanced(as.map(asyncF(f)))
