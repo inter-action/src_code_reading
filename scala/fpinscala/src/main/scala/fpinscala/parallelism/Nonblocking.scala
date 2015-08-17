@@ -30,7 +30,7 @@ object Nonblocking {
 
     def unit[A](a: A): Par[A] =
       es => new Future[A] {
-        def apply(cb: A => Unit): Unit =
+        def apply(cb: A => Unit): Unit =//直接返回结果
           cb(a)
       }
 
@@ -39,13 +39,15 @@ object Nonblocking {
     // this func been called. on the contrary param in the func `unit` will be evaluated once this func been called
     def delay[A](a: => A): Par[A] =
       es => new Future[A] {
-        def apply(cb: A => Unit): Unit =
+        def apply(cb: A => Unit): Unit =//直接返回结果
           cb(a)
       }
 
     def fork[A](a: => Par[A]): Par[A] =
       es => new Future[A] {
         def apply(cb: A => Unit): Unit =
+        // 如果没有fork的Par[A], a(es)(cb)直接计算完直接返回, 但是如果a是fork之后的Par[A]那这个地方
+        // a(es)(cb)又会新建一个thread分支往下执行
           eval(es)(a(es)(cb))
       }
 
@@ -61,7 +63,7 @@ object Nonblocking {
      * Helper function, for evaluating an action
      * asynchronously, using the given `ExecutorService`.
      */
-    def eval(es: ExecutorService)(r: => Unit): Unit =
+    def eval(es: ExecutorService)(r: => Unit): Unit =//新建线程计算结果
       es.submit(new Callable[Unit] { def call = r })
 
     def map2[A,B,C](p: Par[A], p2: Par[B])(f: (A,B) => C): Par[C] =
@@ -153,7 +155,7 @@ object Nonblocking {
     def choiceN[A](p: Par[Int])(ps: List[Par[A]]): Par[A] =
       es => new Future[A] {
         def apply(cb: A => Unit): Unit =
-          p(es) { ind => eval(es) { ps(ind)(es)(cb) }}
+          p(es) { ind => eval(es) { ps(ind)(es)(cb) }}//:?: 为什么这个地方不用 p(es){ ind => ps(ind)(cb) }
       }
 
     def choiceViaChoiceN[A](a: Par[Boolean])(ifTrue: Par[A], ifFalse: Par[A]): Par[A] =
