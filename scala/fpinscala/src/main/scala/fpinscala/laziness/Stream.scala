@@ -205,20 +205,23 @@ object Stream {
 
   def apply[A](as: A*): Stream[A] =
     if (as.isEmpty) empty
-    else cons(as.head, apply(as.tail: _*))
+    else cons(as.head, apply(as.tail: _*))//:?s:
 
   val ones: Stream[Int] = Stream.cons(1, ones)
 
   // This is more efficient than `cons(a, constant(a))` since it's just
   // one object referencing itself.
+  // 这个地方创建了一个 cylic reference, 也就是你怎么拿这个Stream的数据永远都返回 a 值
   def constant[A](a: A): Stream[A] = {
     lazy val tail: Stream[A] = Cons(() => a, () => tail)
     tail
   }
 
+  // create a increment int stream start from n, goes infinite
   def from(n: Int): Stream[Int] =
     cons(n, from(n+1))
 
+  //fibonacci stream
   val fibs = {
     def go(f0: Int, f1: Int): Stream[Int] =
       cons(f0, go(f1, f0+f1))
@@ -232,16 +235,19 @@ object Stream {
     }
 
   /*
-  The below two implementations use `fold` and `map` functions in the Option class to implement unfold, thereby doing away with the need to manually pattern match as in the above solution.
+  The below two implementations use `fold` and `map` functions in the Option class to implement unfold,
+  thereby doing away with the need to manually pattern match as in the above solution.
    */
   def unfoldViaFold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] =
     f(z).fold(empty[A])((p: (A,S)) => cons(p._1,unfold(p._2)(f)))
+    //Option.fold[B](ifEmpty: ⇒ B)(f: (A) ⇒ B): B
 
   def unfoldViaMap[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] =
     f(z).map((p: (A,S)) => cons(p._1,unfold(p._2)(f))).getOrElse(empty[A])
 
   /*
-  Scala provides shorter syntax when the first action of a function literal is to match on an expression.  The function passed to `unfold` in `fibsViaUnfold` is equivalent to `p => p match { case (f0,f1) => ... }`, but we avoid having to choose a name for `p`, only to pattern match on it.
+  Scala provides shorter syntax when the first action of a function literal is to match on an expression.
+  The function passed to `unfold` in `fibsViaUnfold` is equivalent to `p => p match { case (f0,f1) => ... }`, but we avoid having to choose a name for `p`, only to pattern match on it.
   */
   val fibsViaUnfold =
     unfold((0,1)) { case (f0,f1) => Some((f0,(f1,f0+f1))) }
