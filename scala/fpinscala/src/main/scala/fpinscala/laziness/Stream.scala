@@ -1,6 +1,8 @@
 package fpinscala.laziness
 
 import Stream._
+
+// stream 实例的方法
 trait Stream[+A] {
 
   // The natural recursive solution
@@ -73,17 +75,25 @@ trait Stream[+A] {
     case _ => empty
   }
 
-  def foldRight[B](z: => B)(f: (A, => B) => B): B = // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name and may choose not to evaluate it.
+  // The arrow `=>` in front of the argument type `B` means that the function `f` takes its second argument by name
+  // and may choose not to evaluate it.
+  // @param z: 初始值
+  // @param f (A, => B) => B, A 和 B 分别是迭代的值, 传入给 f
+  def foldRight[B](z: => B)(f: (A, => B) => B): B =
     this match {
-      case Cons(h,t) => f(h(), t().foldRight(z)(f)) // If `f` doesn't evaluate its second argument, the recursion never occurs.
+      // If `f` doesn't evaluate its second argument, the recursion never occurs.
+      case Cons(h,t) => f(h(), t().foldRight(z)(f))
       case _ => z
     }
 
+  // Here `b` is the unevaluated recursive step that folds the tail of the stream.
+  //  If `p(a)` returns `true`, `b` will never be evaluated and the computation terminates early.
   def exists(p: A => Boolean): Boolean =
-    foldRight(false)((a, b) => p(a) || b) // Here `b` is the unevaluated recursive step that folds the tail of the stream. If `p(a)` returns `true`, `b` will never be evaluated and the computation terminates early.
+    foldRight(false)((a, b) => p(a) || b)
 
   /*
-  Since `&&` is non-strict in its second argument, this terminates the traversal as soon as a nonmatching element is found.
+  Since `&&` is non-strict in its second argument, this terminates the traversal as soon as a nonmatching
+  element is found.
   */
   def forAll(f: A => Boolean): Boolean =
     foldRight(true)((a,b) => f(a) && b)
@@ -104,6 +114,7 @@ trait Stream[+A] {
       if (f(h)) cons(h, t)
       else t)
 
+  //notice this takes o(1) to finish. not o(n)
   def append[B>:A](s: => Stream[B]): Stream[B] =
     foldRight(s)((h,t) => cons(h,t))
 
@@ -129,10 +140,11 @@ trait Stream[+A] {
       case _ => None
     }
 
+  // :?: 为什么这个地方的 match 没用 match 关键字
   def zipWith[B,C](s2: Stream[B])(f: (A,B) => C): Stream[C] =
     unfold((this, s2)) {
       case (Cons(h1,t1), Cons(h2,t2)) =>
-        Some((f(h1(), h2()), (t1(), t2())))
+        Some((f(h1(), h2()), (t1(), t2())))//这个位置又会被 unfold 的 match block 处理
       case _ => None
     }
 
@@ -144,6 +156,8 @@ trait Stream[+A] {
   def zipAll[B](s2: Stream[B]): Stream[(Option[A],Option[B])] =
     zipWithAll(s2)((_,_))
 
+
+  // zip with another stream, result is a stream of f(node, node)->c
   def zipWithAll[B, C](s2: Stream[B])(f: (Option[A], Option[B]) => C): Stream[C] =
     Stream.unfold((this, s2)) {
       case (Empty, Empty) => None
@@ -153,7 +167,11 @@ trait Stream[+A] {
     }
 
   /*
-  `s startsWith s2` when corresponding elements of `s` and `s2` are all equal, until the point that `s2` is exhausted. If `s` is exhausted first, or we find an element that doesn't match, we terminate early. Using non-strictness, we can compose these three separate logical steps--the zipping, the termination when the second stream is exhausted, and the termination if a nonmatching element is found or the first stream is exhausted.
+  `s startsWith s2` when corresponding elements of `s` and `s2` are all equal, until the point
+  that `s2` is exhausted. If `s` is exhausted first, or we find an element that doesn't match,
+  we terminate early. Using non-strictness, we can compose these three separate logical steps
+  --the zipping, the termination when the second stream is exhausted, and the termination
+  if a nonmatching element is found or the first stream is exhausted.
   */
   def startsWith[A](s: Stream[A]): Boolean =
     zipAll(s).takeWhile(!_._2.isEmpty) forAll {
@@ -161,39 +179,54 @@ trait Stream[+A] {
     }
 
   /*
-  The last element of `tails` is always the empty `Stream`, so we handle this as a special case, by appending it to the output.
+  The last element of `tails` is always the empty `Stream`, so we handle this as a special case,
+   by appending it to the output.
+
+   这个函数是把一个 stream 的各个节点分拆成单独的 stream 节点并构建一个 stream 序列存储这些节点
   */
   def tails: Stream[Stream[A]] =
     unfold(this) {
       case Empty => None
-      case s => Some((s, s drop 1))
+      case s => Some((s, s drop 1))// Some(stream_header_node, stream_tail_node)
     } append Stream(empty)
 
+  // 这个函数是将 stream 分拆成单个节点的stream, 然后比较每个节点是否有任何一个节点包含 stream s 参数,
+  // 如果有返回 true
   def hasSubsequence[A](s: Stream[A]): Boolean =
     tails exists (_ startsWith s)
 
   /*
-  The function can't be implemented using `unfold`, since `unfold` generates elements of the `Stream` from left to right. It can be implemented using `foldRight` though.
+  The function can't be implemented using `unfold`, since `unfold` generates elements of the `Stream`
+   from left to right. It can be implemented using `foldRight` though.
 
-  The implementation is just a `foldRight` that keeps the accumulated value and the stream of intermediate results, which we `cons` onto during each iteration. When writing folds, it's common to have more state in the fold than is needed to compute the result. Here, we simply extract the accumulated list once finished.
+  The implementation is just a `foldRight` that keeps the accumulated value and the stream of
+  intermediate results, which we `cons` onto during each iteration. When writing folds, it's common
+  to have more state in the fold than is needed to compute the result. Here, we simply extract the
+  accumulated list once finished.
+
+  :?: 这个函数没看懂
   */
   def scanRight[B](z: B)(f: (A, => B) => B): Stream[B] =
     foldRight((z, Stream(z)))((a, p0) => {
-      // p0 is passed by-name and used in by-name args in f and cons. So use lazy val to ensure only one evaluation...
+      // p0 is passed by-name and used in by-name args in f and cons.
+      // So use lazy val to ensure only one evaluation...
       lazy val p1 = p0
       val b2 = f(a, p1._1)
       (b2, cons(b2, p1._2))
     })._2
 
+  //注意这个地方是尾递归
   @annotation.tailrec
   final def find(f: A => Boolean): Option[A] = this match {
     case Empty => None
     case Cons(h, t) => if (f(h())) Some(h()) else t().find(f)
   }
 }
+
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
 
+// stream 的静态方法, 与任何特定 stream 实例无关的方法
 object Stream {
   def cons[A](hd: => A, tl: => Stream[A]): Stream[A] = {
     lazy val head = hd
@@ -203,6 +236,7 @@ object Stream {
 
   def empty[A]: Stream[A] = Empty
 
+  //A*, list variant, eg. apply(1, 3, 4)
   def apply[A](as: A*): Stream[A] =
     if (as.isEmpty) empty
     else cons(as.head, apply(as.tail: _*))//:?s:
@@ -227,7 +261,7 @@ object Stream {
       cons(f0, go(f1, f0+f1))
     go(0, 1)
   }
-
+  //创建递归的 stream 的数据结构, tail 永远是 unfold 处理过的
   def unfold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] =
     f(z) match {
       case Some((h,s)) => cons(h, unfold(s)(f))
@@ -239,7 +273,7 @@ object Stream {
   thereby doing away with the need to manually pattern match as in the above solution.
    */
   def unfoldViaFold[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] =
-    f(z).fold(empty[A])((p: (A,S)) => cons(p._1,unfold(p._2)(f)))
+    f(z).fold(empty[A])((p: (A,S)) => cons(p._1,unfold(p._2)(f)))//:?: 为啥这个地方用unfold二不是unfoldViaFold
     //Option.fold[B](ifEmpty: ⇒ B)(f: (A) ⇒ B): B
 
   def unfoldViaMap[A, S](z: S)(f: S => Option[(A, S)]): Stream[A] =
