@@ -10,6 +10,7 @@
 #### NOTES
 
 == scala for
+
     // ----- Gen.scala ----------
     def sameParity(from: Int, to: Int): Gen[(Int,Int)] = for {
       i <- choose(from,to)
@@ -17,6 +18,7 @@
     } yield (i,j)
 
 == andThen
+
     // Gen.scala
     def map[B](f: A => B): SGen[B] =
       // :?: 这个地方的 _ 的用法比较隐晦, 我也不是十分确定,
