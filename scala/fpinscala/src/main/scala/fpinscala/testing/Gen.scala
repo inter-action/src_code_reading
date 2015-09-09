@@ -58,8 +58,9 @@ object Prop {
 
   /* Produce an infinite random stream from a `Gen` and a starting `RNG`. */
   def randomStream[A](g: Gen[A])(rng: RNG): Stream[A] =
-    Stream.unfold(rng)(rng => Some(g.sample.run(rng)))
+    Stream.unfold(rng)(rng => Some(g.sample.run(rng)))//State[S, +A](run: S => (A, S)), A: 结果, S: 下一个状态 即rng
 
+  // 循环测试 n 次, 如果全部通过 返回 Passed
   def forAll[A](as: Gen[A])(f: A => Boolean): Prop = Prop {
     (n,rng) => randomStream(as)(rng).zip(Stream.from(0)).take(n).map {
       case (a, i) => try {
@@ -77,12 +78,15 @@ object Prop {
     s"generated an exception: ${e.getMessage}\n" +
     s"stack trace:\n ${e.getStackTrace.mkString("\n")}"
 
+
+  // 返回只 test 一次的 Prop
   def apply(f: (TestCases,RNG) => Result): Prop =
     Prop { (_,n,rng) => f(n,rng) }
 
   def forAll[A](g: SGen[A])(f: A => Boolean): Prop =
     forAll(g(_))(f)
 
+  // :?:
   def forAll[A](g: Int => Gen[A])(f: A => Boolean): Prop = Prop {
     (max,n,rng) =>
       val casesPerSize = (n - 1) / max + 1
@@ -95,6 +99,7 @@ object Prop {
       prop.run(max,n,rng)
   }
 
+  //验证 p 的结果
   def run(p: Prop,
           maxSize: Int = 100,
           testCases: Int = 100,
@@ -109,6 +114,7 @@ object Prop {
     }
 
   val ES: ExecutorService = Executors.newCachedThreadPool
+  // :?: 这个地方 Par 的用法
   val p1 = Prop.forAll(Gen.unit(Par.unit(1)))(i =>
     Par.map(i)(_ + 1)(ES).get == Par.unit(2)(ES).get)
 
@@ -132,6 +138,7 @@ object Prop {
     ) (ES) get
   }
 
+  // :?: 这个地方的用法是什么意思
   val S = weighted(
     choose(1,4).map(Executors.newFixedThreadPool) -> .75,
     unit(Executors.newCachedThreadPool) -> .25) // `a -> b` is syntax sugar for `(a,b)`
@@ -159,9 +166,11 @@ case class Gen[+A](sample: State[RNG,A]) {
   def map[B](f: A => B): Gen[B] =
     Gen(sample.map(f))
 
+  //自身实例的 sample 和 传入参数 g 的 sample 的两个 state 的结果传入给 f 生成新的 Gen[C]
   def map2[B,C](g: Gen[B])(f: (A,B) => C): Gen[C] =
     Gen(sample.map2(g.sample)(f))
 
+  // f: A => Gen[B], A 是 State 的结果值(经过状态变量计算过的)
   def flatMap[B](f: A => Gen[B]): Gen[B] =
     Gen(sample.flatMap(a => f(a).sample))
 
@@ -178,6 +187,7 @@ case class Gen[+A](sample: State[RNG,A]) {
 
   def unsized = SGen(_ => this)
 
+  //Gen[A] ** Gen[B] => Gen[(A, B)]
   def **[B](g: Gen[B]): Gen[(A,B)] =
     (this map2 g)((_,_))
 }
@@ -189,6 +199,7 @@ object Gen {
   val boolean: Gen[Boolean] =
     Gen(State(RNG.boolean))
 
+  // 生成一个 start<gen<stopExclusive 的 Gen[Int]
   def choose(start: Int, stopExclusive: Int): Gen[Int] =
     Gen(State(RNG.nonNegativeInt).map(n => start + n % (stopExclusive-start)))
 
@@ -205,6 +216,7 @@ object Gen {
    * integer in the range.
    */
   def even(start: Int, stopExclusive: Int): Gen[Int] =
+    // :?: 这个地方的 stopExclusive 为什么需要这么处理
     choose(start, if (stopExclusive%2 == 0) stopExclusive - 1 else stopExclusive).
     map (n => if (n%2 != 0) n+1 else n)
 
@@ -217,12 +229,16 @@ object Gen {
     j <- if (i%2 == 0) even(from,to) else odd(from,to)
   } yield (i,j)
 
+  // 生成 n 个 Gen[A] 的 Gen[List[A]]
+  // :?: a.map2(b)
   def listOfN_1[A](n: Int, g: Gen[A]): Gen[List[A]] =
     List.fill(n)(g).foldRight(unit(List[A]()))((a,b) => a.map2(b)(_ :: _))
 
+  //根据boolean返回的值 返回 g1 或者 g2
   def union[A](g1: Gen[A], g2: Gen[A]): Gen[A] =
     boolean.flatMap(b => if (b) g1 else g2)
 
+  // 根据 RNG.double 和 g1Threshold 的值 来返回 g1 或者 g2 第一个槽位的值
   def weighted[A](g1: (Gen[A],Double), g2: (Gen[A],Double)): Gen[A] = {
     /* The probability we should pull from `g1`. */
     val g1Threshold = g1._2.abs / (g1._2.abs + g2._2.abs)
@@ -237,12 +253,16 @@ object Gen {
    * This generates ASCII strings.
    */
   def stringN(n: Int): Gen[String] =
+    // listOfN => Gen[List[Int]]
+    // .map ( _ : List[Int])
+    // _.map(_:Int => _.toChar)
     listOfN(n, choose(0,127)).map(_.map(_.toChar).mkString)
 
   val string: SGen[String] = SGen(stringN)
 
   implicit def unsized[A](g: Gen[A]): SGen[A] = SGen(_ => g)
 
+  // :?:
   val smallInt = Gen.choose(-10,10)
   val maxProp = forAll(listOf(smallInt)) { l =>
     val max = l.max
@@ -285,9 +305,11 @@ object Gen {
 }
 
 case class SGen[+A](g: Int => Gen[A]) {
-  def apply(n: Int): Gen[A] = g(n)
+  def apply(n: Int): Gen[A] = g(n)// define SGen() => Gen
 
   def map[B](f: A => B): SGen[B] =
+    // :?: 这个地方的 _ 的用法比较隐晦, 我也不是十分确定,
+    // 我猜是 g(Int)=>Gen 之后再用生成的 Gen示例调用 map(f) 返回一个新的 Gen示例
     SGen(g andThen (_ map f))
 
   def flatMap[B](f: A => Gen[B]): SGen[B] =

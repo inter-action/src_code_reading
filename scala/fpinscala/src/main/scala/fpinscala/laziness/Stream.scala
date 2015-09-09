@@ -224,6 +224,8 @@ trait Stream[+A] {
 }
 
 case object Empty extends Stream[Nothing]
+
+// 这个地方的定义很关键, 所有的函数都是 passed-by-name, lazy by default
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
 
 // stream 的静态方法, 与任何特定 stream 实例无关的方法
