@@ -35,9 +35,11 @@
 
 #### TODOS
 gen.scala: ** unapply 定义及用法
+
     object ** {
       def unapply[A,B](p: (A,B)) = Some(p)
     }
+
 
     def forAllPar3[A](g: Gen[A])(f: A => Par[Boolean]): Prop =
       forAll(S ** g) { case s ** a => f(a)(s).get }
