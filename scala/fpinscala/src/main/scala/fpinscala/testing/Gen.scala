@@ -114,7 +114,8 @@ object Prop {
     }
 
   val ES: ExecutorService = Executors.newCachedThreadPool
-  // :?: 这个地方 Par 的用法
+
+  // test 1+1 = 2 n times
   val p1 = Prop.forAll(Gen.unit(Par.unit(1)))(i =>
     Par.map(i)(_ + 1)(ES).get == Par.unit(2)(ES).get)
 
@@ -122,15 +123,18 @@ object Prop {
     if (p) Passed else Falsified("()", 0)
   }
 
+  // check 1+1 = 2
   val p2 = check {
     val p = Par.map(Par.unit(1))(_ + 1)
     val p2 = Par.unit(2)
     p(ES).get == p2(ES).get
   }
 
+  // check p == p2
   def equal[A](p: Par[A], p2: Par[A]): Par[Boolean] =
     Par.map2(p,p2)(_ == _)
 
+  // check 1+1 = 2
   val p3 = check {
     equal (
       Par.map(Par.unit(1))(_ + 1),
@@ -138,28 +142,34 @@ object Prop {
     ) (ES) get
   }
 
-  // :?: 这个地方的用法是什么意思
+  // .75 / (.75 + .25), 3/4 概率选择 newFixedThreadPool, 1/4 概率选择 newCachedThreadPool
+  // :?: 至于为什么用 choose(1, 4) 而不用 unit 有些不懂
   val S = weighted(
     choose(1,4).map(Executors.newFixedThreadPool) -> .75,
     unit(Executors.newCachedThreadPool) -> .25) // `a -> b` is syntax sugar for `(a,b)`
 
+  // 函数 f 是将一个计算变成异步的计算单元
   def forAllPar[A](g: Gen[A])(f: A => Par[Boolean]): Prop =
+    //def forAll[A](as: Gen[A])(f: A => Boolean): Prop = Prop - 测试 n 次, 所有通过就返回true
     forAll(S.map2(g)((_,_))) { case (s,a) => f(a)(s).get }
 
+  // 检验 p 的值是否通过
   def checkPar(p: Par[Boolean]): Prop =
     forAllPar(Gen.unit(()))(_ => p)
 
+  // 和 forAllPar 功能一样, 不同的细节实现
   def forAllPar2[A](g: Gen[A])(f: A => Par[Boolean]): Prop =
     forAll(S ** g) { case (s,a) => f(a)(s).get }
 
+  // 和 forAllPar2 功能一样, 不同的细节实现
   def forAllPar3[A](g: Gen[A])(f: A => Par[Boolean]): Prop =
     forAll(S ** g) { case s ** a => f(a)(s).get }
 
-  val pint = Gen.choose(0,10) map (Par.unit(_))
+  val pint = Gen.choose(0,10) map (Par.unit(_))// 随机生成 Gen[Par[Int]], int in range (0, 10)
   val p4 =
     forAllPar(pint)(n => equal(Par.map(n)(y => y), n))
 
-  val forkProp = Prop.forAllPar(pint2)(i => equal(Par.fork(i), i)) tag "fork"
+  val forkProp = Prop.forAllPar(pint2)(i => equal(Par.fork(i), i)) tag "fork"//测试 Par.fork 的计算结果是否符合预期
 }
 
 case class Gen[+A](sample: State[RNG,A]) {
@@ -230,7 +240,6 @@ object Gen {
   } yield (i,j)
 
   // 生成 n 个 Gen[A] 的 Gen[List[A]]
-  // :?: a.map2(b)
   def listOfN_1[A](n: Int, g: Gen[A]): Gen[List[A]] =
     List.fill(n)(g).foldRight(unit(List[A]()))((a,b) => a.map2(b)(_ :: _))
 
@@ -262,13 +271,15 @@ object Gen {
 
   implicit def unsized[A](g: Gen[A]): SGen[A] = SGen(_ => g)
 
-  // :?:
+  // 测试 List.max 函数的正确性
   val smallInt = Gen.choose(-10,10)
-  val maxProp = forAll(listOf(smallInt)) { l =>
+  val maxProp = forAll(listOf(smallInt)) { l =>//def forAll[A](g: SGen[A])(f: A => Boolean): Prop = 测试所有的 SGen n 次
+    // l: List[Int], created by listOf
     val max = l.max
     !l.exists(_ > max) // No value greater than `max` should exist in `l`
   }
 
+  // 至少返回 List[A].length == 1 的结果
   def listOf1[A](g: Gen[A]): SGen[List[A]] =
     SGen(n => g.listOfN(n max 1))
 
@@ -279,11 +290,17 @@ object Gen {
 
   // We specify that every sorted list is either empty, has one element,
   // or has no two consecutive elements `(a,b)` such that `a` is greater than `b`.
+  //
+  // check sorted property
   val sortedProp = forAll(listOf(smallInt)) { l =>
     val ls = l.sorted
+    // ls.tail.isEmpty make sure the list length is greater than 1
     l.isEmpty || ls.tail.isEmpty || !ls.zip(ls.tail).exists { case (a,b) => a > b }
   }
 
+
+  // [apply & unapply](http://www.tutorialspoint.com/scala/scala_extractors.htm)
+  // :?: 这个地方的作用是什么
   object ** {
     def unapply[A,B](p: (A,B)) = Some(p)
   }
@@ -300,6 +317,7 @@ object Gen {
     l.foldLeft(Par.unit(0))((p,i) =>
       Par.fork { Par.map2(p, Par.unit(i))(_ + _) }))
 
+  // :?:
   def genStringIntFn(g: Gen[Int]): Gen[String => Int] =
     g map (i => (s => i))
 }

@@ -33,6 +33,14 @@
         implicit def unsized[A](g: Gen[A]): SGen[A] = SGen(_ => g)//ignore int param
 
 
+#### TODOS
+gen.scala: ** unapply 定义及用法
+    object ** {
+      def unapply[A,B](p: (A,B)) = Some(p)
+    }
+
+    def forAllPar3[A](g: Gen[A])(f: A => Par[Boolean]): Prop =
+      forAll(S ** g) { case s ** a => f(a)(s).get }
 
 #### Actor.scala中得数据结构状态示例
 ![Actor.scala中得数据结构状态示例](img/non-intrusive-mpsc-node-based-queue.png?raw=true "Actor.scala中得数据结构状态示例")
