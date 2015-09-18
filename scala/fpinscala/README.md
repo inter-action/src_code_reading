@@ -34,7 +34,7 @@
 
 
 #### TODOS
-gen.scala: ** unapply 定义及用法
+== gen.scala: ** unapply 定义及用法
 
     object ** {
       def unapply[A,B](p: (A,B)) = Some(p)
@@ -44,8 +44,12 @@ gen.scala: ** unapply 定义及用法
     def forAllPar3[A](g: Gen[A])(f: A => Par[Boolean]): Prop =
       forAll(S ** g) { case s ** a => f(a)(s).get }
 
-Gen.scala 和 Exhaustive.scala 的区别
+== Gen.scala 和 Exhaustive.scala 的区别
+
+== Chapter 9
+  Result 中 commit的作用
 
 
 #### Actor.scala中得数据结构状态示例
 ![Actor.scala中得数据结构状态示例](img/non-intrusive-mpsc-node-based-queue.png?raw=true "Actor.scala中得数据结构状态示例")
+

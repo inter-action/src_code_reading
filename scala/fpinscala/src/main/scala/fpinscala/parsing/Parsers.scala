@@ -5,6 +5,7 @@ import scala.util.matching.Regex
 import fpinscala.testing._
 import fpinscala.testing.Prop._
 
+// :b:
 trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trait
   def run[A](p: Parser[A])(input: String): Either[ParseError,A]
 
@@ -173,6 +174,7 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
 
 case class Location(input: String, offset: Int = 0) {
 
+  // location's coordination
   lazy val line = input.slice(0,offset+1).count(_ == '\n') + 1
   lazy val col = input.slice(0,offset+1).lastIndexOf('\n') match {
     case -1 => offset + 1
@@ -182,7 +184,7 @@ case class Location(input: String, offset: Int = 0) {
   def toError(msg: String): ParseError =
     ParseError(List((this, msg)))
 
-  def advanceBy(n: Int) = copy(offset = offset+n)
+  def advanceBy(n: Int) = copy(offset = offset+n) //copy is method inherited by case class
 
   /* Returns the line corresponding to this location */
   def currentLine: String =
@@ -193,9 +195,11 @@ case class Location(input: String, offset: Int = 0) {
 }
 
 case class ParseError(stack: List[(Location,String)] = List()) {
+  // create new ParseError by push (loc, msg) onto the head of current stack
   def push(loc: Location, msg: String): ParseError =
     copy(stack = (loc,msg) :: stack)
 
+  // create new ParseError with msg at latest error location
   def label[A](s: String): ParseError =
     ParseError(latestLoc.map((_,s)).toList)
 
