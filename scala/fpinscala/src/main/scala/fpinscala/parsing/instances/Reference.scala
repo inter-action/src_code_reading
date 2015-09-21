@@ -64,6 +64,7 @@ object ReferenceTypes {
   }
 }
 
+// :?: object extends trait 是什么作用
 object Reference extends Parsers[Parser] {
 
   def run[A](p: Parser[A])(s: String): Either[ParseError,A] = {
@@ -130,6 +131,9 @@ object Reference extends Parsers[Parser] {
   /* We provide an overridden version of `many` that accumulates
    * the list of results using a monolithic loop. This avoids
    * stack overflow errors for most grammars.
+   */
+  /*
+    commit 的语义是无法解析依然往下执行, 非 commit 无法解析的时候返回当前已经解析了的结果
    */
   override def many[A](p: Parser[A]): Parser[List[A]] =
     s => {

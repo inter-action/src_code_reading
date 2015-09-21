@@ -79,13 +79,13 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
     p.map(Some(_)) or succeed(None)
 
   /** Parser which consumes zero or more whitespace characters. */
-  def whitespace: Parser[String] = "\\s*".r
+  def whitespace: Parser[String] = "\\s*".r // create a scala.util.matching.Regex instance
 
   /** Parser which consumes 1 or more digits. */
   def digits: Parser[String] = "\\d+".r
 
   /** Parser which consumes reluctantly until it encounters the given string. */
-  def thru(s: String): Parser[String] = (".*?"+Pattern.quote(s)).r
+  def thru(s: String): Parser[String] = (".*?"+Pattern.quote(s)).r // :?: how this `.*?<pattern>` works
 
   /** Unescaped string literals, like "foo" or "bar". */
   def quoted: Parser[String] = string("\"") *> thru("\"").map(_.dropRight(1))
@@ -163,6 +163,7 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
     def as[B](b: B): Parser[B] = self.map(self.slice(p))(_ => b)
     def opL(op: Parser[(A,A) => A]): Parser[A] = self.opL(p)(op)
   }
+
   object Laws {
     def equal[A](p1: Parser[A], p2: Parser[A])(in: Gen[String]): Prop =
       forAll(in)(s => run(p1)(s) == run(p2)(s))

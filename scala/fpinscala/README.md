@@ -32,6 +32,12 @@
 
         implicit def unsized[A](g: Gen[A]): SGen[A] = SGen(_ => g)//ignore int param
 
+== ignore imports
+[stackoverflow, scala ignore imports](http://stackoverflow.com/questions/2871822/how-do-i-exclude-rename-some-classes-from-import-in-scala)
+
+    import scala.collection.mutable.{Map => _, Set => _, _} //import all but Map & Set
+
+
 
 #### TODOS
 == gen.scala: ** unapply 定义及用法
