@@ -6,6 +6,20 @@ import fpinscala.testing._
 import fpinscala.testing.Prop._
 
 // :b:
+/*
+  Todos:
+    trait Parsers[Parser[+_]] 的定义
+      and making Parser[+_] a type parameter means that the interface works for any representation of Parser.
+      The underscore just means that whatever Parser is, it expects one type argument to represent the type
+      of the result, as in Parser[Char].
+
+    Result commit 的作用
+    asStringParser 的作用
+
+    def whitespace: Parser[String] = "\\s*".r
+      这段代码明明返回的是一个Regex实例, 为何函数声明的时候是 Parser[String]
+
+ */
 trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trait
   def run[A](p: Parser[A])(input: String): Either[ParseError,A]
 
@@ -29,16 +43,18 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
 
   def succeed[A](a: A): Parser[A]
 
+  // if Parser[A] A stand for the result of Parser, then what we really got via this slice?
+  // Answer: view usage in JSON.scala.
   def slice[A](p: Parser[A]): Parser[String]
 
   def many1[A](p: Parser[A]): Parser[List[A]] =
-    map2(p, many(p))(_ :: _)
+    map2(p, many(p))(_ :: _)// map2's second param is lazy, so there's no circular reference.
 
   def listOfN[A](n: Int, p: Parser[A]): Parser[List[A]] =
     if (n <= 0) succeed(List())
     else map2(p, listOfN(n-1, p))(_ :: _)
 
-  def many[A](p: Parser[A]): Parser[List[A]] =
+  def many[A](p: Parser[A]): Parser[List[A]] = // :b: 终止条件是什么: 匹配不到时候的 succeed(List())
     map2(p, many(p))(_ :: _) or succeed(List())
 
   def or[A](p1: Parser[A], p2: => Parser[A]): Parser[A]
@@ -48,7 +64,8 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
   implicit def regex(r: Regex): Parser[String]
 
   /*
-  These can be implemented using a for-comprehension, which delegates to the `flatMap` and `map` implementations we've provided on `ParserOps`, or they can be implemented in terms of these functions directly.
+  These can be implemented using a for-comprehension, which delegates to the `flatMap` and `map` implementations
+  we've provided on `ParserOps`, or they can be implemented in terms of these functions directly.
   */
   def product[A,B](p: Parser[A], p2: => Parser[B]): Parser[(A,B)] =
     flatMap(p)(a => map(p2)(b => (a,b)))
@@ -76,6 +93,7 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
     map2(p, slice(p2))((a,b) => a)
 
   def opt[A](p: Parser[A]): Parser[Option[A]] =
+    // p.map() 括号里边只有 Result = success 的时候才执行, 其他的时候返回 Failure
     p.map(Some(_)) or succeed(None)
 
   /** Parser which consumes zero or more whitespace characters. */
@@ -84,10 +102,12 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
   /** Parser which consumes 1 or more digits. */
   def digits: Parser[String] = "\\d+".r
 
+  //一直匹配到找寻目标字符串位置
   /** Parser which consumes reluctantly until it encounters the given string. */
-  def thru(s: String): Parser[String] = (".*?"+Pattern.quote(s)).r // :?: how this `.*?<pattern>` works
+  def thru(s: String): Parser[String] = (".*?"+Pattern.quote(s)).r // :b: how this `.*?<pattern>` works, @see regex `Lazy quantifiers`
 
   /** Unescaped string literals, like "foo" or "bar". */
+  // match string like "foo", when matched, return `foo"` as result, then dropRight(1) to drop trailing `"`, then you get result of `foo`
   def quoted: Parser[String] = string("\"") *> thru("\"").map(_.dropRight(1))
 
   /** Unescaped or escaped string literals, like "An \n important \"Quotation\"" or "bar". */
@@ -107,6 +127,7 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
     doubleString map (_.toDouble) label "double literal"
 
   /** Attempts `p` and strips trailing whitespace, usually used for the tokens of a grammar. */
+  // 返回 p 的结果, 并匹配p后面的任何空格
   def token[A](p: Parser[A]): Parser[A] =
     attempt(p) <* whitespace
 
@@ -119,6 +140,7 @@ trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trai
     map2(p, many(p2 *> p))(_ :: _)
 
   /** Parses a sequence of left-associative binary operators with the same precedence. */
+  // :?: 这个没看懂
   def opL[A](p: Parser[A])(op: Parser[(A,A) => A]): Parser[A] =
     map2(p, many(op ** p))((h,t) => t.foldLeft(h)((a,b) => b._1(a,b._2)))
 

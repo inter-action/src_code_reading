@@ -119,6 +119,7 @@ object Reference extends Parsers[Parser] {
   def fail[A](msg: String): Parser[A] =
     s => Failure(s.loc.toError(msg), true)
 
+  // return a uncommit result
   def attempt[A](p: Parser[A]): Parser[A] =
     s => p(s).uncommit
 

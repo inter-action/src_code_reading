@@ -326,7 +326,6 @@ case class SGen[+A](g: Int => Gen[A]) {
   def apply(n: Int): Gen[A] = g(n)// define SGen() => Gen
 
   def map[B](f: A => B): SGen[B] =
-    // :?: 这个地方的 _ 的用法比较隐晦, 我也不是十分确定,
     // 我猜是 g(Int)=>Gen 之后再用生成的 Gen示例调用 map(f) 返回一个新的 Gen示例
     SGen(g andThen (_ map f))
 
