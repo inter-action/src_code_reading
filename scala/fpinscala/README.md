@@ -54,8 +54,8 @@
       }
     }
 
-== scala for comprehension with flatMap and map
-[scalas-for-comprehension-with-futures](http://stackoverflow.com/questions/19045936/scalas-for-comprehension-with-futures)
+== scala for comprehension with flatMap and map  
+[scalas-for-comprehension-with-futures](http://stackoverflow.com/questions/19045936/scalas-for-comprehension-with-futures)  
 [!what-is-scalas-yield](http://stackoverflow.com/questions/1052476/what-is-scalas-yield)
 
 First about for comprehension. It was answered on SO many many times, that it's an abstraction over a couple of monadic operations: map, flatMap, withFilter. When you use <-, scalac desugars this lines into monadic flatMap:
