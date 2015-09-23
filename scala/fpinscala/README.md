@@ -44,6 +44,7 @@
     计算过程的封装演变。
 
 == inner class call outer trait methods
+
     // Parsers.scala
     trait X { self =>
       def add(x: Int):Int
@@ -52,6 +53,33 @@
         def add3() = self.add(3)
       }
     }
+
+== scala for comprehension with flatMap and map
+[scalas-for-comprehension-with-futures](http://stackoverflow.com/questions/19045936/scalas-for-comprehension-with-futures)
+[!what-is-scalas-yield](http://stackoverflow.com/questions/1052476/what-is-scalas-yield)
+
+First about for comprehension. It was answered on SO many many times, that it's an abstraction over a couple of monadic operations: map, flatMap, withFilter. When you use <-, scalac desugars this lines into monadic flatMap:
+
+    r1 <- result1 into result.flatMap(r1 => .... )
+
+it looks like an imperative computation (what a monad is all about), you bind a computation result to the r1. And yield part is desugared into map call. Result type depends on the type of result's.
+
+Future trait has a flatMap and map functions, so we can use for comprehension with it. In your example can be desugared into the following code:
+
+    result1.flatMap(r1 => result2.flatMap(r2 => result3.map(r3 => r1 + r2 + r3) ) )
+
+BUT you should remember that this gonna be evaluated sequentially, not in parallel, because the result of result2 and result3 depends on r1. To make it parallel you should at first create future and then collect them in for comprehension, you can think of this like about a pipe:
+
+    val result1 = future(...)
+    val result2 = future(...)
+    val result3 = future(...)
+
+    val res = for {
+       r1 <- result1
+       r2 <- result2
+       r3 <- result3
+    } yield (r1+r2+r3)
+
 
 #### TODOS
 == gen.scala: ** unapply 定义及用法

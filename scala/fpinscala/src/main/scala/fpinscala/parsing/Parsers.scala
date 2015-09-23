@@ -14,10 +14,16 @@ import fpinscala.testing.Prop._
       of the result, as in Parser[Char].
 
     Result commit 的作用
-    asStringParser 的作用
+    asStringParser 的作用:
+      将其他类型的 Parser[_] 转换成 ParserOps. 比如定义好的:
+        implicit def regex(r: Regex): Parser[String]
 
     def whitespace: Parser[String] = "\\s*".r
       这段代码明明返回的是一个Regex实例, 为何函数声明的时候是 Parser[String]
+
+      这个 trait 里边有如下定义
+      implicit def regex(r: Regex): Parser[String]
+
 
  */
 trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trait

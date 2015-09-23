@@ -1,5 +1,13 @@
 package fpinscala.parsing
 
+
+
+/*
+TODOS:
+  how func jsonParser works:
+    resolved: by define nested rules
+
+ */
 trait JSON
 
 object JSON {
@@ -13,23 +21,31 @@ object JSON {
   def jsonParser[Parser[+_]](P: Parsers[Parser]): Parser[JSON] = {
     // we'll hide the string implicit conversion and promote strings to tokens instead
     // this is a bit nicer than having to write token everywhere
+
+    // http://stackoverflow.com/questions/2871822/how-do-i-exclude-rename-some-classes-from-import-in-scala
+    // import all from Parse except implict string convertion
     import P.{string => _, _}
     implicit def tok(s: String) = token(P.string(s))
 
-    def array = surround("[","]")(
+    def array = surround("[","]")( // array contains lit, obj, keyval
       value sep "," map (vs => JArray(vs.toIndexedSeq))) scope "array"
+
     def obj = surround("{","}")(
       keyval sep "," map (kvs => JObject(kvs.toMap))) scope "object"
-    def keyval = escapedQuoted ** (":" *> value)
+
+    def keyval = escapedQuoted ** (":" *> value)//keyval contains <"string": lit>
+
     def lit = scope("literal") {
-      "null".as(JNull) |
+      "null".as(JNull) | // "null" will be converted to Parser then converted to ParserOps with predefined implicit conversion
       double.map(JNumber(_)) |
       escapedQuoted.map(JString(_)) |
       "true".as(JBool(true)) |
       "false".as(JBool(false))
     }
+
     def value: Parser[JSON] = lit | obj | array
-    root(whitespace *> (obj | array))
+
+    root(whitespace *> (obj | array)) //start from `ob-map or array with end-of-line`
   }
 }
 
