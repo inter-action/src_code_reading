@@ -109,6 +109,7 @@ object Monoid {
     // foldMap(as, dual(endoMonoid[B]))(a => b => f(b, a))(z) => B
     foldMap(as, dual(endoMonoid[B]))(a => b => f(b, a))(z)
 
+  // 这个函数和 foldMap 不同的是, 这个函数是二分法并行执行的
   def foldMapV[A, B](as: IndexedSeq[A], m: Monoid[B])(f: A => B): B =
     if (as.length == 0)
       m.zero
@@ -174,13 +175,17 @@ object Monoid {
   def count(s: String): Int = {
     // A single character's count. Whitespace does not count,
     // and non-whitespace starts a new Stub.
+    // convert WC[Char] to WC[String]
     def wc(c: Char): WC =
       if (c.isWhitespace)
         Part("", 0, "")
       else
         Stub(c.toString)
+
     // `unstub(s)` is 0 if `s` is empty, otherwise 1.
     def unstub(s: String) = s.length min 1
+
+    // string.toIndexedSeq returns Vector[Char]
     foldMapV(s.toIndexedSeq, wcMonoid)(wc) match {
       case Stub(s) => unstub(s)
       case Part(l, w, r) => unstub(l) + w + unstub(r)
