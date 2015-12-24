@@ -99,6 +99,9 @@
 == Chapter 9
   Result 中 commit的作用
 
+parallelism/
+  如何实现并行计算的
+
 
 #### Actor.scala中得数据结构状态示例
 ![Actor.scala中得数据结构状态示例](img/non-intrusive-mpsc-node-based-queue.png?raw=true "Actor.scala中得数据结构状态示例")
