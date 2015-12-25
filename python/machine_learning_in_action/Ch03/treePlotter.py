@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf8 -*-
+#
 '''
 Created on Oct 14, 2010
 

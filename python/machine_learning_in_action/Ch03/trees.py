@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf8 -*-
+
 '''
 Created on Oct 12, 2010
 Decision Tree Source Code for Machine Learning in Action Ch. 3
@@ -54,7 +57,7 @@ def splitDataSet(dataSet, axis, value):
 计算数据集中最好的分类特性返回
 """
 def chooseBestFeatureToSplit(dataSet):
-    numFeatures = len(dataSet[0]) - 1      #the last column is used for the labels
+    numFeatures = len(dataSet[0]) - 1      #the last column is used for the labels, 最后一栏用于判断类型属于那种
     baseEntropy = calcShannonEnt(dataSet)
     bestInfoGain = 0.0; bestFeature = -1
     for i in range(numFeatures):        #iterate over all the features
@@ -95,7 +98,7 @@ ID3 algorithm 实现
 """
 def createTree(dataSet,labels):
     classList = [example[-1] for example in dataSet]
-    if classList.count(classList[0]) == len(classList): # 假如最后的特性值都一样, 这个地方算不算提前退出了
+    if classList.count(classList[0]) == len(classList): # 假如最后的特性值都一样, 这个地方算不算提前退出了: 不算最后一栏是分类的label.
         return classList[0]#stop splitting when all of the classes are equal
     if len(dataSet[0]) == 1: #stop splitting when there are no more features in dataSet
         return majorityCnt(classList) #take a majority vote for leaf node
