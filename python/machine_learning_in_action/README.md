@@ -6,7 +6,23 @@
 这里的代码是用python2 写的, 主要依赖 numpy 和 matplotlib. 这里的代码有我阅读过的标注和修改。
 
 # Tools
+## wolframalpha
 [wolframalpha](http://www.wolframalpha.com/)
+
+    http://reference.wolfram.com/language/tutorial/BasicPlotting.zh.html
+
+examples:
+
+* 画出loge 为底的 -3 到 3范围的图, 注意 ln = loge [ref](http://www.rapidtables.com/math/algebra/Ln.htm):
+
+    `plot loge(x) {x, -3, 3} `
+
+    `plot f(x)=x^3/(x+1)^2 `
+
+* 两个图画在一个上:
+
+    `ContourPlot[x^2 + y^2 == 25 , y == -(1/2)x + 10]`
+
 
 # Notes
 
@@ -33,3 +49,31 @@ remain problems:
 * @page 59
 
     >The tree in figure 3.8 matches our data well; however, it probably matches our data too well. This problem is known as overfitting. In order to reduce the problem of over- fitting, we can prune the tree. This will go through and remove some leaves. If a leaf node adds only a little information, it will be cut off and merged with another leaf. We’ll investigate this further when we revisit decision trees in chapter 9.
+
+## chapter 4: ￼Classifying with probability theory: naive Bayes
+
+关于可能的误分类:
+
+>There are ways to bias the classifier to not make these errors, and we’ll talk about these in chapter 7.
+
+
+## Python Snippets
+
+`returnVec = [0]*3 # init 3 length arr filled with 0`
+
+`set(0) | set(1) #union two set, return set(0, 1)`
+
+## numpy
+
+`ones(3)->array([ 1.,  1.,  1.])`
+
+`zeros(3)->array([ 0.,  0.,  0.])`
+
+
+## todos
+
+    pendings:
+        [what's ln means](http://betterexplained.com/articles/demystifying-the-natural-logarithm-ln/)
+
+        chapter 4:
+            贝叶斯公式的意思，和这个公式和代码间的联系
