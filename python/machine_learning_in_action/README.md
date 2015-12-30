@@ -9,7 +9,7 @@
 ## wolframalpha
 [wolframalpha](http://www.wolframalpha.com/)
 
-    http://reference.wolfram.com/language/tutorial/BasicPlotting.zh.html
+    [wolf 画图简介]http://reference.wolfram.com/language/tutorial/BasicPlotting.zh.html
 
 examples:
 
@@ -51,10 +51,57 @@ remain problems:
     >The tree in figure 3.8 matches our data well; however, it probably matches our data too well. This problem is known as overfitting. In order to reduce the problem of over- fitting, we can prune the tree. This will go through and remove some leaves. If a leaf node adds only a little information, it will be cut off and merged with another leaf. We’ll investigate this further when we revisit decision trees in chapter 9.
 
 ## chapter 4: ￼Classifying with probability theory: naive Bayes
+这章主要是讲贝叶斯的应用, 判断 doc 是 offensive or non-offensive, 通过计算各个单词的概率为 offensive 和 non-offensive 的概率,
+个总体上 doc 为 offensive 和 non-offensive 的概率。获得用于分类的基础数据。然后对于被测试的文章应用分词(这个地方涉及到 stop word, 处理
+掉的话准确率会更高) 让后计算各个单词的概率, 并计算为 offensive 的概率和，并和训练数据的基准值进行比较, 来判断是否属于哪个分类。其中的
+根据就是贝叶斯的公式:@Page 60, 但是这章和传统的贝叶斯应用还是有区别的, 传统是需要计算贝叶斯公式下面部分的。但是由于这章的实现是和训练数据
+的基准值比大小，所以没有必要计算公式的下面部分。公式下面部分的应用,会计算一个概率值, 然后根据这个概率值的阀值进行判断是否属于哪个分类。具体
+看下面链接部分的 `贝叶斯推断及其互联网应用（二）：过滤垃圾邮件`
 
 关于可能的误分类:
 
 >There are ways to bias the classifier to not make these errors, and we’ll talk about these in chapter 7.
+
+links:
+
+[贝叶斯推断及其互联网应用（一）：定理简介](http://www.ruanyifeng.com/blog/2011/08/bayesian_inference_part_one.html)
+
+[贝叶斯推断及其互联网应用（二）：过滤垃圾邮件](http://www.ruanyifeng.com/blog/2011/08/bayesian_inference_part_two.html)
+
+
+## chapter 5: Logistic regression (逻辑回归)
+这章讲了应用, 但是关键的一个公式没有做任何解释: `weights = weights + alpha * error * dataMatrix[randIndex]`
+这部分关键的信息缺失, 导致我并不能完全理解这其中的方式。中间搜索了相关材料, 包括wiki. 仍是无法看懂。所以这一部分就先略过。
+
+关键的链接写在这里:
+
+[机器学习算法与Python实践之（七）逻辑回归（Logistic Regression）](http://blog.csdn.net/zouxy09/article/details/20319673)
+
+[从最大似然到EM算法浅解](http://blog.csdn.net/zouxy09/article/details/8537620)
+
+[Expectation–maximization algorithm](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm)
+
+[Andrew NG: 逻辑回归笔记](http://blog.csdn.net/abcjennifer/article/details/7716281)
+
+
+logistic regression 的目标数据需是 independent variables
+
+这章讲的内容应用于 binary Logistic regression ， 多级分类:
+> Cases with more than two categories are referred to as multinomial logistic regression,
+or, if the multiple categories are ordered, as ordinal logistic regression.
+
+
+about optimization algorithms:
+>Among the optimization algorithms, one of the most common algorithms is gradient ascent.
+Gradient ascent can be simplified with stochastic gradient ascent.
+
+* converging
+
+>One way to look at how well the optimization algorithm is doing is to see if it’s converging. - @page 92
+
+sigmoid 函数的作用:
+
+随机梯度下降的作用:
 
 
 ## Python Snippets
@@ -65,15 +112,34 @@ remain problems:
 
 ## numpy
 
-`ones(3)->array([ 1.,  1.,  1.])`
+    //ones
+    ones(3) -> array([ 1.,  1.,  1.])
+    ones((1, 3)) -> array([[ 1.,  1.,  1.]])
+    zeros(3) -> array([ 0.,  0.,  0.])
 
-`zeros(3)->array([ 0.,  0.,  0.])`
 
+## Math
+门这样的符号表示相乘的意思
+
+
+## links
+[open class room: machine learning](http://openclassroom.stanford.edu/MainFolder/CoursePage.php?course=MachineLearning)
+
+[理解矩阵乘法](http://www.ruanyifeng.com/blog/2015/09/matrix-multiplication.html)
+
+[导数](https://zh.wikipedia.org/wiki/%E5%AF%BC%E6%95%B0)
 
 ## todos
+    done:
+        chapter 4:
+            贝叶斯公式的意思，和这个公式和代码间的联系
 
     pendings:
         [what's ln means](http://betterexplained.com/articles/demystifying-the-natural-logarithm-ln/)
 
-        chapter 4:
-            贝叶斯公式的意思，和这个公式和代码间的联系
+        chapter 5:
+            [Simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing)
+
+            sigmoid 函数的作用
+            weights = weights + alpha * error * dataMatrix[randIndex] # 公式的作用
+
