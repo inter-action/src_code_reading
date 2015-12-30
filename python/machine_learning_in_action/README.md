@@ -71,18 +71,29 @@ links:
 
 ## chapter 5: Logistic regression (逻辑回归)
 这章讲了应用, 但是关键的一个公式没有做任何解释: `weights = weights + alpha * error * dataMatrix[randIndex]`
-这部分关键的信息缺失, 导致我并不能完全理解这其中的方式。中间搜索了相关材料, 包括wiki. 仍是无法看懂。所以这一部分就先略过。
+这部分关键的信息缺失, 导致我并不能完全理解这其中的方式。中间搜索了相关材料, 包括wiki. 仍是无法看懂，主要卡在参数求解的位置了。
+所以这一部分就先略过。
 
 关键的链接写在这里:
 
-[机器学习算法与Python实践之（七）逻辑回归（Logistic Regression）](http://blog.csdn.net/zouxy09/article/details/20319673)
+[似然函数](https://zh.wikipedia.org/wiki/%E4%BC%BC%E7%84%B6%E5%87%BD%E6%95%B0)
 
-[从最大似然到EM算法浅解](http://blog.csdn.net/zouxy09/article/details/8537620)
+似然函数和概率的语义差不多，区别是：
+>概率用于在已知一些参数的情况下，预测接下来的观测所得到的结果，而似然性则是用于在已知某些观测所得到的结果时，对有关事物的性质的参数进行估计。
+
+基本的意思就是在一直某些时间发生的情况下, 推断其事件影响因子参数在该事件发生的最优的情况(即最大可能)。
 
 [Expectation–maximization algorithm](https://en.wikipedia.org/wiki/Expectation%E2%80%93maximization_algorithm)
 
+[ ! 机器学习算法与Python实践之（七）逻辑回归（Logistic Regression）](http://blog.csdn.net/zouxy09/article/details/20319673)
+
+[从最大似然到EM算法浅解](http://blog.csdn.net/zouxy09/article/details/8537620)
+
+[Logistic Regression 模型简介](http://tech.meituan.com/intro_to_logistic_regression.html)
+
 [Andrew NG: 逻辑回归笔记](http://blog.csdn.net/abcjennifer/article/details/7716281)
 
+[Logistic regression](https://en.wikipedia.org/wiki/Logistic_regression)
 
 logistic regression 的目标数据需是 independent variables
 
@@ -120,6 +131,14 @@ sigmoid 函数的作用:
 
 ## Math
 门这样的符号表示相乘的意思
+
+## 术语
+
+* Latent variable
+
+>In statistics, latent variables (from Latin: present participle of lateo (“lie hidden”),
+as opposed to observable variables), are variables that are not directly observed but are rather inferred
+(through a mathematical model) from other variables that are observed (directly measured).
 
 
 ## links
