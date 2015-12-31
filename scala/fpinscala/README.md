@@ -83,6 +83,12 @@
     } yield (r1+r2+r3)
 
 
+== f.curried
+    >val f = (A: Int, B:Int) => A+B
+    f: (Int, Int) => Int = <function2>
+    >f.curried
+    Int => (Int => Int) = <function1>
+
 #### TODOS
 == gen.scala: ** unapply 定义及用法
 

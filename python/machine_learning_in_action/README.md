@@ -177,7 +177,7 @@ variables whose domain is discrete.
 >In mathematics and its applications, a parametric family or a parameterized family is a family of objects
 (a set of related objects) whose definitions depend on a set of parameters.
 
-## links
+# links
 [open class room: machine learning](http://openclassroom.stanford.edu/MainFolder/CoursePage.php?course=MachineLearning)
 
 [理解矩阵乘法](http://www.ruanyifeng.com/blog/2015/09/matrix-multiplication.html)
