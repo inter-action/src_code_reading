@@ -76,7 +76,12 @@ links:
 
 关键的链接写在这里:
 
-[似然函数](https://zh.wikipedia.org/wiki/%E4%BC%BC%E7%84%B6%E5%87%BD%E6%95%B0)
+[似然函数-ch](https://zh.wikipedia.org/wiki/%E4%BC%BC%E7%84%B6%E5%87%BD%E6%95%B0)
+
+[Likelihood function, 似然函数-en, Recommaned](https://en.wikipedia.org/wiki/Likelihood_function)
+
+着重看下 Log-likelihood 一节, 讲的很透彻, 具体就是 x 分布的 likehood function 依赖两个变量 alpha, beta 如何求得
+beta 的 MLE(maximum-likelihood estimate)
 
 似然函数和概率的语义差不多，区别是：
 >概率用于在已知一些参数的情况下，预测接下来的观测所得到的结果，而似然性则是用于在已知某些观测所得到的结果时，对有关事物的性质的参数进行估计。
@@ -148,12 +153,38 @@ as opposed to observable variables), are variables that are not directly observe
 identically distributed (i.i.d.) if each random variable has the same probability distribution as the others
 and all are mutually independent.
 
+* [奇点, singularity](https://zh.wikipedia.org/wiki/%E5%A5%87%E7%82%B9_(%E6%95%B0%E5%AD%A6)):
+
+>在数学中，奇点（singularity）或奇点，是数学物件中无法处理的点
+
+* [Probability density function-PDF, 概率密度函数](https://en.wikipedia.org/wiki/Probability_density_function)
+指的是某个值对应的概率值
+
+>In probability theory, a probability density function (PDF), or density of a continuous random variable,
+is a function that describes the relative likelihood for this random variable to take on a given value.
+
+* [Probability mass function-PMF](https://en.wikipedia.org/wiki/Probability_mass_function)
+PMF 是指离散分布的各个值的概率分布图
+
+>In probability theory and statistics, a probability mass function (pmf) is a function that gives the probability
+that a discrete random variable is exactly equal to some value.[1] The probability mass function is often the primary
+means of defining a discrete probability distribution, and such functions exist for either scalar or multivariate random
+variables whose domain is discrete.
+
+* [Parametric family](https://en.wikipedia.org/wiki/Parametric_family)
+这个地方定义了一个关键的标注: fx(.;&#920;)
+
+>In mathematics and its applications, a parametric family or a parameterized family is a family of objects
+(a set of related objects) whose definitions depend on a set of parameters.
+
 ## links
 [open class room: machine learning](http://openclassroom.stanford.edu/MainFolder/CoursePage.php?course=MachineLearning)
 
 [理解矩阵乘法](http://www.ruanyifeng.com/blog/2015/09/matrix-multiplication.html)
 
-[导数](https://zh.wikipedia.org/wiki/%E5%AF%BC%E6%95%B0)
+[导数(Derivative)](https://zh.wikipedia.org/wiki/%E5%AF%BC%E6%95%B0)
+
+[html entities](http://www.w3.org/TR/html4/sgml/entities.html)
 
 ## todos
     done:
