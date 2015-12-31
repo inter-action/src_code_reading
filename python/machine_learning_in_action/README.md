@@ -132,14 +132,21 @@ sigmoid 函数的作用:
 ## Math
 门这样的符号表示相乘的意思
 
+
+
 ## 术语
 
-* Latent variable
+* Latent variable:
 
 >In statistics, latent variables (from Latin: present participle of lateo (“lie hidden”),
 as opposed to observable variables), are variables that are not directly observed but are rather inferred
 (through a mathematical model) from other variables that are observed (directly measured).
 
+* identically distributed:
+
+>In probability theory and statistics, a sequence or other collection of random variables is independent and
+identically distributed (i.i.d.) if each random variable has the same probability distribution as the others
+and all are mutually independent.
 
 ## links
 [open class room: machine learning](http://openclassroom.stanford.edu/MainFolder/CoursePage.php?course=MachineLearning)
