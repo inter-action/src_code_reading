@@ -46,7 +46,7 @@ chapter notes:
 approach where you keep revisiting the topic from different perspectives.
 
 
-#### NOTES
+# NOTES
 
 == scala for
 
@@ -129,6 +129,7 @@ first create future and then collect them in for comprehension, you can think of
 
 
 == f.curried
+
     >val f = (A: Int, B:Int) => A+B
     f: (Int, Int) => Int = <function2>
     >f.curried
@@ -151,7 +152,7 @@ defined in State.scala
     case object Coin extends Input
 
 
-#### TODOS
+# TODOS
 == gen.scala: ** unapply 定义及用法
 
     object ** {
