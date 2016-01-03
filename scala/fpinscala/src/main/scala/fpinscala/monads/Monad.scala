@@ -68,8 +68,10 @@ trait Monad[F[_]] extends Functor[F] {
   def _flatMap[A,B](ma: F[A])(f: A => F[B]): F[B] =
     compose((_:Unit) => ma, f)(())
 
-  def join[A](mma: F[F[A]]): F[A] = flatMap(mma)(ma => ma)
+  // join & flatMap are circular dependant, this means you only need to implement one of them
+  def join[A](mma: F[F[A]]): F[A] = flatMap(mma)(ma => ma) 
 
+  //todo: too complicated, cant figure this thing out!
   def filterM[A](ms: List[A])(f: A => F[Boolean]): F[List[A]] =
     ms.foldRight(unit(List[A]()))((x,y) =>
       compose(f, (b: Boolean) => if (b) map2(unit(x),y)(_ :: _) else y)(x))
@@ -114,6 +116,10 @@ object Monad {
   // family of monads, one for each type `S`. One solution is to create a class
   // `StateMonads` that accepts the `S` type argument and then has a _type member_
   // for the fully applied `State[S, A]` type inside:
+
+  // 这个地方需要解释下, State 接受两个 Type. Monad 只接收一个 Type, 为了让 State 能满足 Monad Law
+  // 这个地方重新将 State[S, A] 重新声明了一个为 StateS[A] 的 Type. 这样就满足了 Monad 只接收一个 Type 的需求
+  // 之所以这个地方为了让 State[S, A] 满足 Monad Law 是为了重用 Monad Trait 定义的方法。
   class StateMonads[S] {
     type StateS[A] = State[S, A]
 
@@ -136,14 +142,19 @@ object Monad {
 
   val idMonad = new Monad[Id] {
     def unit[A](a: => A) = Id(a)
+    // todo: 这个地方的实现是不是有问题, ida 的 flatMap 在哪实现的
     override def flatMap[A,B](ida: Id[A])(f: A => Id[B]): Id[B] = ida flatMap f
   }
 
   def getState[S]: State[S,S] = State(s => (s,s))
   def setState[S](s: S): State[S,Unit] = State(_ => ((),s))
 
+  // :b: notice the defination difference here between the val and def declaration. (def is used to declare func.
+  //  while val is used to declare value)
+  // here stateMonad is re-evaluated againt new type Int, while F is not capable of this usage as stateMonad.
   val F = stateMonad[Int]
 
+  // :?: 
   def zipWithIndex[A](as: List[A]): List[(Int,A)] =
     as.foldLeft(F.unit(List[(Int, A)]()))((acc,a) => for {
       xs <- acc
