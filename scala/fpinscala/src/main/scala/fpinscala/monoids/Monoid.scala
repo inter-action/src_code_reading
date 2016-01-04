@@ -228,8 +228,10 @@ trait Foldable[F[_]] {
     foldMap(as)(f.curried)(endoMonoid[B])(z)
 
   def foldLeft[A,B](as: F[A])(z: B)(f: (B, A) => B): B =
+    //@dual is used to switch param order in Monoid.op, make sure (b:B)=>f(b, a) evaluted last.
     foldMap(as)(a => (b: B) => f(b, a))(dual(endoMonoid[B]))(z)
 
+  // B in this case is type f(B)->B, according context foldRight defined in this trait
   def foldMap[A, B](as: F[A])(f: A => B)(mb: Monoid[B]): B =
     foldRight(as)(mb.zero)((a, b) => mb.op(f(a), b))
 
@@ -274,11 +276,11 @@ case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
 object TreeFoldable extends Foldable[Tree] {
   override def foldMap[A, B](as: Tree[A])(f: A => B)(mb: Monoid[B]): B = as match {
     case Leaf(a) => f(a)
-    case Branch(l, r) => mb.op(foldMap(l)(f)(mb), foldMap(r)(f)(mb))
+    case Branch(l, r) => mb.op(foldMap(l)(f)(mb), foldMap(r)(f)(mb))//recursive
   }
   override def foldLeft[A, B](as: Tree[A])(z: B)(f: (B, A) => B) = as match {
     case Leaf(a) => f(z, a)
-    case Branch(l, r) => foldLeft(r)(foldLeft(l)(z)(f))(f)
+    case Branch(l, r) => foldLeft(r)(foldLeft(l)(z)(f))(f)//recursive
   }
   override def foldRight[A, B](as: Tree[A])(z: B)(f: (A, B) => B) = as match {
     case Leaf(a) => f(a, z)
