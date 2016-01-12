@@ -44,6 +44,7 @@ trait Applicative[F[_]] extends Functor[F] {
 
   def product[G[_]](G: Applicative[G]): Applicative[({type f[x] = (F[x], G[x])})#f] = {
     val self = this
+
     new Applicative[({type f[x] = (F[x], G[x])})#f] {
       def unit[A](a: => A) = (self.unit(a), G.unit(a))
       override def apply[A,B](fs: (F[A => B], G[A => B]))(p: (F[A], G[A])) =
@@ -66,16 +67,17 @@ trait Applicative[F[_]] extends Functor[F] {
   }
 
   def sequenceMap[K,V](ofa: Map[K,F[V]]): F[Map[K,V]] =
+    // acc : unit(Map.empty[K,V])
+    // k: map's key
+    // fv: map's value
     (ofa foldLeft unit(Map.empty[K,V])) { case (acc, (k, fv)) =>
-      map2(acc, fv)((m, v) => m + (k -> v))
+      map2(acc, fv)((m, v) => m + (k -> v)) // m+(k->v) create a new map
     }
-
 }
 
 sealed trait Validation[+E, +A]
 
-case class Failure[E](head: E, tail: Vector[E])
-  extends Validation[E, Nothing]
+case class Failure[E](head: E, tail: Vector[E]) extends Validation[E, Nothing]
 
 case class Success[A](a: A) extends Validation[Nothing, A]
 
@@ -93,6 +95,7 @@ object Applicative {
   def validationApplicative[E]: Applicative[({type f[x] = Validation[E,x]})#f] =
     new Applicative[({type f[x] = Validation[E,x]})#f] {
       def unit[A](a: => A) = Success(a)
+
       override def map2[A,B,C](fa: Validation[E,A], fb: Validation[E,B])(f: (A, B) => C) =
         (fa, fb) match {
           case (Success(a), Success(b)) => Success(f(a, b))
@@ -105,9 +108,12 @@ object Applicative {
 
   type Const[A, B] = A
 
+  // be careful here, M: Monoid[M], the first M denotes variable or instance of Monoid[M] 
+  // (while M in here is a type)
   implicit def monoidApplicative[M](M: Monoid[M]) =
     new Applicative[({ type f[x] = Const[M, x] })#f] {
       def unit[A](a: => A): M = M.zero
+
       override def apply[A,B](m1: M)(m2: M): M = M.op(m1, m2)
     }
 
@@ -131,6 +137,7 @@ trait Monad[F[_]] extends Applicative[F] {
 
   def join[A](mma: F[F[A]]): F[A] = flatMap(mma)(ma => ma)
 }
+
 
 object Monad {
 
@@ -161,18 +168,26 @@ object Monad {
 }
 
 trait Traverse[F[_]] extends Functor[F] with Foldable[F] { self =>
+  // 注意这个地方和书中的定义不同, implicit 和 M[_]:Applicative 是一个意思
+  // 但是用法的时候, 看 @map 的定义, 后面显式传递了 Applicative 的限定 (Monad 是 Applicative 的子类型)
+  // 所以用 M[_]:Applicative 这种写法限定 M 的时候，编译器会动态加上 implicit G: Applicative[G] 这样的限定
+  // def traverse[G[_],A,B](fa: F[A])(f: A => G[B])(implicit G: Applicative[G]): G[F[B]] =
   def traverse[M[_]:Applicative,A,B](fa: F[A])(f: A => M[B]): M[F[B]] =
     sequence(map(fa)(f))
   def sequence[M[_]:Applicative,A](fma: F[M[A]]): M[F[A]] =
     traverse(fma)(ma => ma)
 
   type Id[A] = A
-
+  // this idMonad is a hard one to understand. Tricky
   val idMonad = new Monad[Id] {
-    def unit[A](a: => A) = a
+    // def unit[A](a: => Id[A])
+    def unit[A](a: => A) = a // a is a Type Id[A]
+    // def flatMap[A, B](a: Id[A])(f: A => Id[B]): Id[B]
     override def flatMap[A,B](a: A)(f: A => B): B = f(a)
   }
 
+  // traverse[Id, A, B](fa)(f)(idMonad) actually returns Id[F[B]], so here it makes sense
+  // f: A=> B is actually f: A=> Id[B]
   def map[A,B](fa: F[A])(f: A => B): F[B] =
     traverse[Id, A, B](fa)(f)(idMonad)
 
@@ -182,21 +197,28 @@ trait Traverse[F[_]] extends Functor[F] with Foldable[F] { self =>
     traverse[({type f[x] = Const[B,x]})#f,A,Nothing](
       as)(f)(monoidApplicative(mb))
 
+  // call f(a) for every item in F[A], then combine the results(which is State instances) 
+  // with Monad.stateMonad, then return the combine result.
   def traverseS[S,A,B](fa: F[A])(f: A => State[S, B]): State[S, F[B]] =
     traverse[({type f[x] = State[S, x]})#f, A, B](fa)(f)(Monad.stateMonad)
 
+  // this method zips every item in F[A] with index started from 0, then return zipped result
+  // this method use state to increse the index.
   def zipWithIndex_[A](ta: F[A]): F[(A,Int)] =
     traverseS(ta)((a: A) => (for {
       i <- get[Int]
       _ <- set(i + 1)
     } yield (a, i))).run(0)._1
 
+  // this method use state to accumlate every item in F[A], and return accumlated List[A] result.
   def toList_[A](fa: F[A]): List[A] =
     traverseS(fa)((a: A) => (for {
       as <- get[List[A]] // Get the current state, the accumulated list.
       _  <- set(a :: as) // Add the current element and set the new list as the new state.
-    } yield ())).run(Nil)._2.reverse
+    } yield ())).run(Nil)._2.reverse//// quote@page222: Note that we yield () because in this instance we don’t want to return any value other than the state.
 
+  // this method will iterate every item in F[A], combine the translated (A->B) with Monad[F]
+  // then return (F[B], S), B is the accumlated result
   def mapAccum[S,A,B](fa: F[A], s: S)(f: (A, S) => (B, S)): (F[B], S) =
     traverseS(fa)((a: A) => (for {
       s1 <- get[S]
@@ -210,6 +232,7 @@ trait Traverse[F[_]] extends Functor[F] with Foldable[F] { self =>
   def zipWithIndex[A](fa: F[A]): F[(A, Int)] =
     mapAccum(fa, 0)((a, s) => ((a, s), s + 1))._1
 
+  // this reverse does not accutally reverse the list, right?
   def reverse[A](fa: F[A]): F[A] =
     mapAccum(fa, toList(fa).reverse)((_, as) => (as.head, as.tail))._1
 
@@ -236,6 +259,7 @@ trait Traverse[F[_]] extends Functor[F] with Foldable[F] { self =>
 
   def fuse[M[_],N[_],A,B](fa: F[A])(f: A => M[B], g: A => N[B])
                          (implicit M: Applicative[M], N: Applicative[N]): (M[F[B]], N[F[B]]) =
+    // M product N, create a new Applicative passed in traverse                                                    
     traverse[({type f[x] = (M[x], N[x])})#f, A, B](fa)(a => (f(a), g(a)))(M product N)
 
   def compose[G[_]](implicit G: Traverse[G]): Traverse[({type f[x] = F[G[x]]})#f] =

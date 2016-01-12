@@ -26,24 +26,135 @@
 
 !! 注意这章源码的 stateMonad 的定义和用法, 有些特别
 
-what is Monads:
+What is Functors:
+
+what can we benefit from Monads:
+
+[what is Monads]:
 >A monad is an implementation of one of the minimal sets of monadic combinators, satisfying the 
 laws of associativity and identity.
 
-about functors and Monads:
+[Monad Laws]:
+
+* associativity:
+
+    op(op(a, b), c) == op(a, op(b, c))
+
+* identity:
+
+    M.map(Ma)(a => a) = Ma
+
+
+[about functors and Monads]:
 >The names functor and monad come from the branch of mathematics called category theory
 
 >The Monad contract doesn’t specify what is happening between the lines, only that whatever
 is happening satisfies the laws of associativity and identity.(so you can call `a.flatMap(=>b.flatMap())` 
 with out breaking the logic)
 
-primitive operations:
+[primitive operations]:
 primitive operations is the minimal set of trait operations that depended on their implementator's implementation.
 for example: monad's primitive operations is unit & flatMap
 
-chapter notes:
+[The Primitive Combinators of Monads]:
+unit & flatMap
+
+
+
+[chapter notes]:
 >An abstract topic like this can’t be fully understood all at once. It requires an iterative 
 approach where you keep revisiting the topic from different perspectives.
+
+
+## chapter 12: Applicative and traversable functors
+
+@page 206
+We’ll see that this new abstraction, called an applicative functor, is less powerful than a monad, 
+but we’ll also see that limitations come with benefits.
+
+what is Applicative:
+
+Applicative vs Monads:@page211
+
+all Monads are applicative, the other way is not true.
+
+
+scala vector
+
+override def apply[A,B](m1: M)(m2: M): M = M.op(m1, m2)
+
+exercise 12.7-12.11, 12.15
+
+代码中 Monad 为什么要重写 apply, map2 方法
+
+zipWithIndex_ 的 get[Int] 哪定义的？ 应该是 import state, State 里边的
+
+sys.error("zip: Incompatible shapes.")
+
+monoidApplicative why this has to be implicit
+
+这两个的区别
+    // G: Applicative[G] 的第一个 G 是 Applicative[G] 的实例
+    def product[G[_]](G: Applicative[G])
+
+    // 这里的 G[_] 中的 G 是 Type, implicit G: Monad[G] 中的第一个 G 表示 Mond[G] 的一个实例
+    // 只不过这里有 implicit 关键字, or 这是对 G 的一个限定？
+    def composeM[G[_],H[_]](implicit G: Monad[G], H: Monad[H], T: Traverse[H])
+
+
+
+[The applicative laws]:
+
+* Left and right identity:
+
+        map2(unit(()), fa)((_,a) => a) == fa
+        map2(fa, unit(()))((a,_) => a) == fa
+
+* Associativity:
+
+    // 满足
+
+        op(a, op(b, c)) == op(op(a, b), c)
+
+    //根据
+
+        def product[A,B](fa: F[A], fb: F[B]): F[(A,B)]
+        def assoc[A,B,C](p: (A,(B,C))): ((A,B), C) = p match { case (a, (b, c)) => ((a,b), c) }
+
+    //推导出
+
+        product(product(fa,fb),fc) == map(product(fa, product(fb,fc)))(assoc)
+
+* Naturality of product:
+
+    //满足
+
+        map2(a,b)(productF(f,g)) == product(map(a)(f), map(b)(g))
+
+        def productF[I,O,I2,O2](f: I => O, g: I2 => O2): (I,I2) => (O,O2) = (i,i2) => (f(i), g(i2))
+
+what use are those Applicative Laws:
+>The applicative laws are not surprising or profound. Just like the monad laws, 
+these are simple sanity checks that the applicative functor works in the way that we’d expect.
+
+
+[The Primitive Combinators of Applicative]:
+
+* product, map, and unit are an alternate formulation of Applicative.
+  def product[A,B](fa: F[A], fb: F[B]): F[(A,B)
+  def map[A, B](fa: F[A])(f: A => B): F[B]
+
+* map2, unit
+
+
+[Others]:
+
+注意 Traverse trait 中 traverse 的写法. 还有 @map 的写法, a tricky one to understand
+
+注意这章 State 的用法(zipWithIndex_, toList_), 很有意思. 第一个是当做计数器来用, 第二个是当做临时储存的容器再用
+
+
+
 
 
 # NOTES
@@ -151,6 +262,10 @@ defined in State.scala
    
     case object Coin extends Input
 
+== compose vs andThen
+  f compose g => f(g(x))
+  f andThen g = g(f(x))
+
 
 # TODOS
 == gen.scala: ** unapply 定义及用法
@@ -175,7 +290,7 @@ defined in State.scala
 parallelism/
   如何实现并行计算的
 
-review this book's code
+review this whole book & code
 
 #### Actor.scala中得数据结构状态示例
 ![Actor.scala中得数据结构状态示例](img/non-intrusive-mpsc-node-based-queue.png?raw=true "Actor.scala中得数据结构状态示例")
