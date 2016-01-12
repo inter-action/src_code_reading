@@ -141,8 +141,9 @@ these are simple sanity checks that the applicative functor works in the way tha
 [The Primitive Combinators of Applicative]:
 
 * product, map, and unit are an alternate formulation of Applicative.
-  def product[A,B](fa: F[A], fb: F[B]): F[(A,B)
-  def map[A, B](fa: F[A])(f: A => B): F[B]
+
+        def product[A,B](fa: F[A], fb: F[B]): F[(A,B)
+        def map[A, B](fa: F[A])(f: A => B): F[B]
 
 * map2, unit
 
