@@ -68,6 +68,7 @@ object IO1 {
     def apply[A](a: => A): IO[A] = unit(a) // syntax for IO { .. }
 
     def ref[A](a: A): IO[IORef[A]] = IO { new IORef(a) }
+
     sealed class IORef[A](var value: A) {
       def set(a: A): IO[A] = IO { value = a; a }
       def get: IO[A] = IO { value }
@@ -79,6 +80,7 @@ object IO1 {
 
   def ReadLine: IO[String] = IO { readLine }
   def PrintLine(msg: String): IO[Unit] = IO { println(msg) }
+
   import IO0.fahrenheitToCelsius
 
   def converter: IO[Unit] = for {
@@ -139,14 +141,18 @@ object IO1 {
 
   val factorialREPL: IO[Unit] = sequence_(
     IO { println(helpstring) },
+
+    // if line != q, run `factorial` indefinately
     doWhile { IO { readLine } } { line =>
       val ok = line != "q"
+
       when (ok) { for {
         n <- factorial(line.toInt)
         _ <- IO { println("factorial: " + n) }
       } yield () }
     }
   )
+
 }
 
 
@@ -168,6 +174,7 @@ object IO2a {
     def map[B](f: A => B): IO[B] =
       flatMap(f andThen (Return(_)))
   }
+
   case class Return[A](a: A) extends IO[A]
   case class Suspend[A](resume: () => A) extends IO[A]
   case class FlatMap[A,B](sub: IO[A], k: A => IO[B]) extends IO[B]

@@ -18,7 +18,7 @@
 # chapter notes
 
 ## chapter 11: ￼Monads
-这章主要讲了函数式编程中的 Monads 和两个关键的 Monads Law: associative and identity law. 
+这章主要讲了函数式编程中的 Monads 和两个关键的 Monads Law: associative and identity law.
 这章也是理解 map flatMap 之类的函数的关键的一章
 
 我个人关于 Monads 的理解就是任何符合 Monads 操作集的类型 (flatMap, Map, unit ....) Monads 只是这些操作集的抽象
@@ -31,7 +31,7 @@ What is Functors:
 what can we benefit from Monads:
 
 [what is Monads]:
->A monad is an implementation of one of the minimal sets of monadic combinators, satisfying the 
+>A monad is an implementation of one of the minimal sets of monadic combinators, satisfying the
 laws of associativity and identity.
 
 [Monad Laws]:
@@ -49,7 +49,7 @@ laws of associativity and identity.
 >The names functor and monad come from the branch of mathematics called category theory
 
 >The Monad contract doesn’t specify what is happening between the lines, only that whatever
-is happening satisfies the laws of associativity and identity.(so you can call `a.flatMap(=>b.flatMap())` 
+is happening satisfies the laws of associativity and identity.(so you can call `a.flatMap(=>b.flatMap())`
 with out breaking the logic)
 
 [primitive operations]:
@@ -62,14 +62,14 @@ unit & flatMap
 
 
 [chapter notes]:
->An abstract topic like this can’t be fully understood all at once. It requires an iterative 
+>An abstract topic like this can’t be fully understood all at once. It requires an iterative
 approach where you keep revisiting the topic from different perspectives.
 
 
 ## chapter 12: Applicative and traversable functors
 
 @page 206
-We’ll see that this new abstraction, called an applicative functor, is less powerful than a monad, 
+We’ll see that this new abstraction, called an applicative functor, is less powerful than a monad,
 but we’ll also see that limitations come with benefits.
 
 what is Applicative:
@@ -134,7 +134,7 @@ monoidApplicative why this has to be implicit
         def productF[I,O,I2,O2](f: I => O, g: I2 => O2): (I,I2) => (O,O2) = (i,i2) => (f(i), g(i2))
 
 what use are those Applicative Laws:
->The applicative laws are not surprising or profound. Just like the monad laws, 
+>The applicative laws are not surprising or profound. Just like the monad laws,
 these are simple sanity checks that the applicative functor works in the way that we’d expect.
 
 
@@ -153,6 +153,29 @@ these are simple sanity checks that the applicative functor works in the way tha
 注意 Traverse trait 中 traverse 的写法. 还有 @map 的写法, a tricky one to understand
 
 注意这章 State 的用法(zipWithIndex_, toList_), 很有意思. 第一个是当做计数器来用, 第二个是当做临时储存的容器再用
+
+
+
+## chapter 13: External effects and I/O
+desc:
+
+[Todos]:
+
+@Monad.scala
+
+  case h #:: t => f(z,h) flatMap (z2 => foldM(t)(z2)(f))
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -211,22 +234,22 @@ these are simple sanity checks that the applicative functor works in the way tha
 
 [!what-is-scalas-yield](http://stackoverflow.com/questions/1052476/what-is-scalas-yield)
 
->First about for comprehension. It was answered on SO many many times, that it's an abstraction over a couple 
+>First about for comprehension. It was answered on SO many many times, that it's an abstraction over a couple
 of monadic operations: map, flatMap, withFilter. When you use <-, scalac desugars this lines into monadic flatMap:
 
     r1 <- result1 into result.flatMap(r1 => .... )
 
->it looks like an imperative computation (what a monad is all about), 
-you bind a computation result to the r1. And yield part is desugared into map call. 
+>it looks like an imperative computation (what a monad is all about),
+you bind a computation result to the r1. And yield part is desugared into map call.
 Result type depends on the type of result's.
 
->Future trait has a flatMap and map functions, so we can use for comprehension with it. 
+>Future trait has a flatMap and map functions, so we can use for comprehension with it.
 In your example can be desugared into the following code:
 
     result1.flatMap(r1 => result2.flatMap(r2 => result3.map(r3 => r1 + r2 + r3) ) )
 
->BUT you should remember that this gonna be evaluated sequentially, not in parallel, 
-because the result of result2 and result3 depends on r1. To make it parallel you should at 
+>BUT you should remember that this gonna be evaluated sequentially, not in parallel,
+because the result of result2 and result3 depends on r1. To make it parallel you should at
 first create future and then collect them in for comprehension, you can think of this like about a pipe:
 
     val result1 = future(...)
@@ -253,14 +276,14 @@ A type constructor declared inline like this is often called a type lambda in Sc
 
     Monad[({type IntState[A] = State[Int, A]})#IntState]
 
-== Unit 
+== Unit
     here it use () to denote Unit return
 
     def setState[S](s: S): State[S,Unit] = State(_ => ((),s))
 
 == case object
 defined in State.scala
-   
+
     case object Coin extends Input
 
 == compose vs andThen
