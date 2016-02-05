@@ -19,22 +19,30 @@ def sigmoid(inX):
 
 def gradAscent(dataMatIn, classLabels):
     dataMatrix = mat(dataMatIn)             #convert to NumPy matrix
-    labelMat = mat(classLabels).transpose() #convert to NumPy matrix
-    m,n = shape(dataMatrix)
+    labelMat = mat(classLabels).transpose() # Transpose matrix
+    m,n = shape(dataMatrix) # m rows, n columns
     alpha = 0.001
     maxCycles = 500
     weights = ones((n,1))
     for k in range(maxCycles):              #heavy on matrix operations
-        h = sigmoid(dataMatrix*weights)     #matrix mult
+        h = sigmoid(dataMatrix*weights)     #matrix mult, 这个地方的 sigmoid 参数是不是需要 sum 预处理下？像 stocGradAscent0 函数
         error = (labelMat - h)              #vector subtraction
-        weights = weights + alpha * dataMatrix.transpose()* error #matrix mult
+        weights = weights + alpha * dataMatrix.transpose() * error #matrix mult
     return weights
 
+"""
+画出 Logistic Regression 的示意图
+
+@params
+
+    weights: gradAscent 函数计算返回的结果
+"""
 def plotBestFit(weights):
     import matplotlib.pyplot as plt
+
     dataMat,labelMat=loadDataSet()
-    dataArr = array(dataMat)
-    n = shape(dataArr)[0] 
+    dataArr = array(dataMat) # convert to NumPy array
+    n = shape(dataArr)[0] # get row counts
     xcord1 = []; ycord1 = []
     xcord2 = []; ycord2 = []
     for i in range(n):
@@ -44,11 +52,14 @@ def plotBestFit(weights):
             xcord2.append(dataArr[i,1]); ycord2.append(dataArr[i,2])
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    # plot scatter
     ax.scatter(xcord1, ycord1, s=30, c='red', marker='s')
     ax.scatter(xcord2, ycord2, s=30, c='green')
+    #plot regression line
     x = arange(-3.0, 3.0, 0.1)
     y = (-weights[0]-weights[1]*x)/weights[2]
     ax.plot(x, y)
+
     plt.xlabel('X1'); plt.ylabel('X2');
     plt.show()
 
@@ -68,7 +79,7 @@ def stocGradAscent1(dataMatrix, classLabels, numIter=150):
     for j in range(numIter):
         dataIndex = range(m)
         for i in range(m):
-            alpha = 4/(1.0+j+i)+0.0001    #apha decreases with iteration, does not 
+            alpha = 4/(1.0+j+i)+0.0001    #apha decreases with iteration, does not
             randIndex = int(random.uniform(0,len(dataIndex)))#go to 0 because of the constant
             h = sigmoid(sum(dataMatrix[randIndex]*weights))
             error = classLabels[randIndex] - h
@@ -76,12 +87,24 @@ def stocGradAscent1(dataMatrix, classLabels, numIter=150):
             del(dataIndex[randIndex])
     return weights
 
+"""
+classify data,
+
+@params
+    inX: input value,
+    weights: trained weights
+"""
 def classifyVector(inX, weights):
     prob = sigmoid(sum(inX*weights))
     if prob > 0.5: return 1.0
     else: return 0.0
 
+"""
+test Logistic Regression algorithms's error rate
+
+"""
 def colicTest():
+    # train data
     frTrain = open('horseColicTraining.txt'); frTest = open('horseColicTest.txt')
     trainingSet = []; trainingLabels = []
     for line in frTrain.readlines():
@@ -92,6 +115,7 @@ def colicTest():
         trainingSet.append(lineArr)
         trainingLabels.append(float(currLine[21]))
     trainWeights = stocGradAscent1(array(trainingSet), trainingLabels, 1000)
+
     errorCount = 0; numTestVec = 0.0
     for line in frTest.readlines():
         numTestVec += 1.0
@@ -105,9 +129,12 @@ def colicTest():
     print "the error rate of this test is: %f" % errorRate
     return errorRate
 
+
+"""
+10 times error rate's mean value
+"""
 def multiTest():
     numTests = 10; errorSum=0.0
     for k in range(numTests):
         errorSum += colicTest()
     print "after %d iterations the average error rate is: %f" % (numTests, errorSum/float(numTests))
-        
