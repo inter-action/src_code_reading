@@ -518,6 +518,11 @@ object IO3 {
   // without going through `Par`. Hint: define `translate` using `runFree`.
 
   def translate[F[_],G[_],A](f: Free[F,A])(fg: F ~> G): Free[G,A] = {
+    /*
+    这个地方之所以能解决 runFree 的 stack overflow 的问题, 是由于 runFree 中的 G.flatMap 大多数的 G
+    实例都不是 stack safe 的, 但是由于用 Free monad 实现的 flatMap 是构建一个 Free 实例返回 这意味着
+    Free.flatMap 是不会层级嵌套的 也就不会出现 stack overflow 的问题
+     */
     type FreeG[A] = Free[G,A]
     val t = new (F ~> FreeG) {
       def apply[A](a: F[A]): Free[G,A] = Suspend { fg(a) }
@@ -567,6 +572,7 @@ object IO3 {
     def flatMap[B](f: A => ConsoleReader[B]): ConsoleReader[B] =
       ConsoleReader(r => f(run(r)).run(r))
   }
+
   object ConsoleReader {
     implicit val monad = new Monad[ConsoleReader] {
       def unit[A](a: => A) = ConsoleReader(_ => a)
@@ -617,14 +623,27 @@ object IO3 {
   def read(file: AsynchronousFileChannel,
            fromPosition: Long,
            numBytes: Int): Par[Either[Throwable, Array[Byte]]] =
+
     Par.async { (cb: Either[Throwable, Array[Byte]] => Unit) =>
+
       val buf = ByteBuffer.allocate(numBytes)
+      // note: () usage.
+      /*
+
+      AsynchronousFileChannel
+
+      public abstract <A> void read(ByteBuffer dst,
+                              long position,
+                              A attachment,
+                              CompletionHandler<Integer,? super A> handler)
+       */
       file.read(buf, fromPosition, (), new CompletionHandler[Integer, Unit] {
         def completed(bytesRead: Integer, ignore: Unit) = {
           val arr = new Array[Byte](bytesRead)
           buf.slice.get(arr, 0, bytesRead)
           cb(Right(arr))
         }
+
         def failed(err: Throwable, ignore: Unit) =
           cb(Left(err))
       })

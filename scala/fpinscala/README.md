@@ -157,6 +157,18 @@ these are simple sanity checks that the applicative functor works in the way tha
 
 
 ## chapter 13: External effects and I/O
+这章主要讲了如何用 Monads 来隔离 Side Effects. 也讲了如何用 Trampolining Pattern 去解决 Stack Overflow 的
+问题.
+
+
+这章源码定义了 n 个 IO 模块, 演示了处理 IO 的演进过程
+
+* IO0, IO1, IO2a(handle stackoverflow), IO2b(generilize modeling), IO2c
+
+这段代码也需要注意下
+
+    type ~>[F[_], G[_]] = Translate[F,G] // gives us infix syntax `F ~> G` for `Translate[F,G]`
+
 desc:
 
 [Todos]:
@@ -164,6 +176,9 @@ desc:
 @Monad.scala
 
   case h #:: t => f(z,h) flatMap (z2 => foldM(t)(z2)(f))
+
+
+
 
 
 
