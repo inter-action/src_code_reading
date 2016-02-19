@@ -1,4 +1,10 @@
 Go Commons Pool
+
+[Original Repo](https://github.com/jolestar/go-commons-pool)
+
+http://jolestar.com/go-commons-pool-and-go-concurrent/
+
+
 =====
 
 [![Build Status](https://travis-ci.org/jolestar/go-commons-pool.svg?branch=master)](https://travis-ci.org/jolestar/go-commons-pool)
@@ -13,7 +19,7 @@ Features
 -------
 1. Support custom [PooledObjectFactory](https://godoc.org/github.com/jolestar/go-commons-pool#PooledObjectFactory).
 1. Rich pool configuration option, can precise control pooled object lifecycle. see [ObjectPoolConfig](https://godoc.org/github.com/jolestar/go-commons-pool#ObjectPoolConfig).
-	* Pool LIFO (last in, first out) or FIFO (first in, first out) 
+	* Pool LIFO (last in, first out) or FIFO (first in, first out)
 	* Pool cap config
 	* Pool object validate config
 	* Pool object borrow block and max waiting time config
@@ -53,36 +59,36 @@ Usage
     		}))
     obj, _ := pool.BorrowObject()
     pool.ReturnObject(obj)
-    	
+
     //use custom Object factory
-    
+
     type MyObjectFactory struct {
     }
-    
+
     func (f *MyObjectFactory) MakeObject() (*PooledObject, error) {
     	return NewPooledObject(&MyPoolObject{}), nil
     }
-    
+
     func (f *MyObjectFactory) DestroyObject(object *PooledObject) error {
     	//do destroy
     	return nil
     }
-    
+
     func (f *MyObjectFactory) ValidateObject(object *PooledObject) bool {
     	//do validate
     	return true
     }
-    
+
     func (f *MyObjectFactory) ActivateObject(object *PooledObject) error {
     	//do activate
     	return nil
     }
-    
+
     func (f *MyObjectFactory) PassivateObject(object *PooledObject) error {
     	//do passivate
     	return nil
     }
-    
+
     pool := NewObjectPoolWithDefaultConfig(new(MyObjectFactory))
     pool.Config.MaxTotal = 100
     obj, _ := pool.BorrowObject()
@@ -93,7 +99,7 @@ more example please see pool_test.go and example_test.go
 Note
 -------
 PooledObjectFactory.MakeObject must return a pointer, not value.
-The following code will complain error. 
+The following code will complain error.
 
 	pool := NewObjectPoolWithDefaultConfig(NewPooledObjectFactorySimple(
 		func() (interface{}, error) {
@@ -120,7 +126,7 @@ Dependency
 PerformanceTest
 -------
 The results of running the pool_perf_test is almost equal to the java version [PerformanceTest](https://github.com/apache/commons-pool/blob/trunk/src/test/java/org/apache/commons/pool2/performance/PerformanceTest.java)
-    
+
     go test --perf=true
 
 For Apache commons pool user

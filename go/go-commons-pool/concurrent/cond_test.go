@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+/*
+todo: 处理 dead lock 的问题
+	这里边没有死锁， 由于 LockTestObject 和 内部 cond 对象公用一个锁 任何调用 cond.Wait.. 开头的方法都会先释放
+	锁, 执行完之后再回上锁, 我并不认为这种设计方式合理, 首先第一眼看上去 TestTimeoutCondWaitTimeoutRemain 方法
+	就会执行死锁 （我就是这样的 找了半天才发现不是）容易造成对代码错误的理解, 用起来估计也容易写出带有bug的代码
+	(你以为你在 LockTestObject 对象上上锁了, cond.wait 却给打开了！)
+
+	cond.Wait~ 开头的方法 首先会打开自身的锁 然后依赖于自身的 channel 来做等待
+*/
 type LockTestObject struct {
 	lock *sync.Mutex
 	cond *TimeoutCond
@@ -15,6 +24,7 @@ type LockTestObject struct {
 
 func NewLockTestObject() *LockTestObject {
 	lock := new(sync.Mutex)
+	// ! same lock for two obj
 	return &LockTestObject{lock: lock, cond: NewTimeoutCond(lock)}
 }
 
@@ -41,6 +51,8 @@ func (o *LockTestObject) lockAndNotify() {
 	o.cond.Signal()
 }
 
+// these test doesnt insert any assert !, so unit test doesnt do any deed
+
 // ! this func will cause dead lock
 func TestTimeoutCondWait(t *testing.T) {
 	fmt.Println("TestTimeoutCondWait")
@@ -52,6 +64,9 @@ func TestTimeoutCondWait(t *testing.T) {
 		// this goes first, obj will be locked, then obj.lockAndNotify will never get
 		// a chance to excute obj.cond.Signal, therehence, obj.lockAndWait will never
 		// release its lock
+		//
+		// No dead lock ! lockAndWait call cond.Wait, and cond.Wait release the lock both obj holds
+		// and use its channel to implement wait.
 		obj.lockAndWait()
 		wait.Done()
 	}()
@@ -73,6 +88,8 @@ func TestTimeoutCondWaitTimeout(t *testing.T) {
 		wait.Done()
 	}()
 	wait.Wait()
+	// insert assert(true) here?
+	//  if wait.Done() never get its chance to execute, insertion of assert(true) does no good
 }
 
 func TestTimeoutCondWaitTimeoutNotify(t *testing.T) {
@@ -84,12 +101,13 @@ func TestTimeoutCondWaitTimeoutNotify(t *testing.T) {
 	timeout := 2000
 	go func() {
 		begin := currentTimeMillis()
+		// time.Duration default to nano secs
 		obj.lockAndWaitWithTimeout(time.Duration(timeout) * time.Millisecond)
 		end := currentTimeMillis()
 		ch <- int((end - begin))
 		wait.Done()
 	}()
-	sleep(200)
+	sleep(200) // 200 nano-secs
 	go func() {
 		obj.lockAndNotify()
 		wait.Done()
@@ -117,7 +135,7 @@ func TestTimeoutCondWaitTimeoutRemain(t *testing.T) {
 	ch := make(chan time.Duration, 1)
 	timeout := time.Duration(2000) * time.Millisecond
 	go func() {
-		remainTimeout, _ := obj.lockAndWaitWithTimeout(timeout)
+		remainTimeout, _ := obj.lockAndWaitWithTimeout(timeout) // todo: 还是有死锁, 这个地方一定会是 timeout 之后 (没有死锁, 见上文)
 		ch <- remainTimeout
 		wait.Done()
 	}()
@@ -143,9 +161,11 @@ func TestTimeoutCondHasWaiters(t *testing.T) {
 		wait.Done()
 	}()
 	time.Sleep(time.Duration(50) * time.Millisecond)
+	// todo: 这个地方应该一直锁死才对
 	obj.lock.Lock()
 	assert.True(t, obj.cond.HasWaiters())
 	obj.lock.Unlock()
+
 	go func() {
 		obj.lockAndNotify()
 		wait.Done()
@@ -153,6 +173,7 @@ func TestTimeoutCondHasWaiters(t *testing.T) {
 	wait.Wait()
 	assert.False(t, obj.cond.HasWaiters())
 }
+
 func TestInterrupted(t *testing.T) {
 	fmt.Println("TestInterrupted")
 	obj := NewLockTestObject()
@@ -162,6 +183,11 @@ func TestInterrupted(t *testing.T) {
 	ch := make(chan bool, 5)
 	for i := 0; i < count; i++ {
 		go func() {
+			/*
+				first goroutine block at here, when `obj.cond.Interrupt()` get called
+				lockAndWait exits, original channel obj.cond.signal got closed,
+				i++, next loop begins, loop i > 2 does not block at all
+			*/
 			ch <- obj.lockAndWait()
 			wait.Done()
 		}()
@@ -169,6 +195,7 @@ func TestInterrupted(t *testing.T) {
 	sleep(100)
 	go func() { obj.cond.Interrupt() }()
 	wait.Wait()
+
 	for i := 0; i < count; i++ {
 		b := <-ch
 		assert.True(t, b, "expect %v interrupted bug get false", i)
