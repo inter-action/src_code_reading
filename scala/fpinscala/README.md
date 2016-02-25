@@ -165,6 +165,8 @@ these are simple sanity checks that the applicative functor works in the way tha
 
 * IO0, IO1, IO2a(handle stackoverflow), IO2b(generilize modeling), IO2c
 
+重点看 IO2c 的代码实现
+
 这段代码也需要注意下
 
     type ~>[F[_], G[_]] = Translate[F,G] // gives us infix syntax `F ~> G` for `Translate[F,G]`
