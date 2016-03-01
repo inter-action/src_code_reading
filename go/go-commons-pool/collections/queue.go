@@ -83,6 +83,7 @@ func NewDeque(capacity int) *LinkedBlockingDeque {
 
 //Links provided element as first element, or returns false if full.
 //return true if successful, otherwise false
+// prepend to head
 func (q *LinkedBlockingDeque) linkFirst(e interface{}) bool {
 	if q.count >= q.capacity {
 		return false
@@ -90,9 +91,9 @@ func (q *LinkedBlockingDeque) linkFirst(e interface{}) bool {
 	f := q.first
 	x := newNode(e, nil, f)
 	q.first = x
-	if q.last == nil {
+	if q.last == nil {//刚初始化才有必要 first==nil && last==nil
 		q.last = x
-	} else {
+	} else {// if q.last == nil, f == nil
 		f.prev = x
 	}
 	q.count = q.count + 1
@@ -110,7 +111,7 @@ func (q *LinkedBlockingDeque) linkLast(e interface{}) bool {
 	l := q.last
 	x := newNode(e, l, nil)
 	q.last = x
-	if q.first == nil {
+	if q.first == nil {// when initialize, dont need to set l.next(cause l is nil)
 		q.first = x
 	} else {
 		l.next = x
@@ -129,8 +130,10 @@ func (q *LinkedBlockingDeque) unlinkFirst() interface{} {
 	}
 	n := f.next
 	item := f.item
+	// help GC
 	f.item = nil
-	f.next = f //help GC
+	f.next = nil //help GC
+
 	q.first = n
 	if n == nil {
 		q.last = nil
@@ -151,7 +154,8 @@ func (q *LinkedBlockingDeque) unlinkLast() interface{} {
 	p := l.prev
 	item := l.item
 	l.item = nil
-	l.prev = l // help GC
+	l.prev = nil // help GC
+
 	q.last = p
 	if p == nil {
 		q.first = nil
@@ -175,7 +179,10 @@ func (q *LinkedBlockingDeque) unlink(x *Node) {
 	} else {
 		p.next = n
 		n.prev = p
+
 		x.item = nil
+		x.pre =nil
+		x.next = nil
 		// Don't mess with x's links.  They may still be in use by
 		// an iterator.
 		q.count = q.count - 1
@@ -211,6 +218,7 @@ func (q *LinkedBlockingDeque) AddLast(e interface{}) error {
 
 // OfferFirst inserts the specified element at the front of this deque unless it would violate capacity restrictions.
 // return if the element was added to this deque
+// prepend to fisrt, public method, goroutine safe
 func (q *LinkedBlockingDeque) OfferFirst(e interface{}) bool {
 	if e == nil {
 		return false
@@ -241,8 +249,8 @@ func (q *LinkedBlockingDeque) PutFirst(e interface{}) {
 	}
 	q.lock.Lock()
 	defer q.lock.Unlock()
-	for !q.linkFirst(e) {
-		q.notFull.Wait()
+	for !q.linkFirst(e) {//block until prepend success
+		q.notFull.Wait()//lock is released here
 	}
 }
 
@@ -483,6 +491,7 @@ func newIterator(q *LinkedBlockingDeque, desc bool) *LinkedBlockingDequeIterator
 }
 
 // LinkedBlockingDequeIterator is iterator implements for LinkedBlockingDeque
+// Not goroutine safe
 type LinkedBlockingDequeIterator struct {
 	q        *LinkedBlockingDeque
 	next     *Node

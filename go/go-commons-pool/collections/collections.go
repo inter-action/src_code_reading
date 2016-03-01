@@ -27,7 +27,7 @@ func NewSyncMap() *SyncIdentityMap {
 
 // Get by key
 func (m *SyncIdentityMap) Get(key interface{}) interface{} {
-	m.RLock()
+	m.RLock()// &SyncIdentityMap 和 new(SyncIdentityMap) 一个道理 创建了一个 sync.RWMutex 实例
 	keyPtr := genKey(key)
 	value := m.m[keyPtr]
 	m.RUnlock()

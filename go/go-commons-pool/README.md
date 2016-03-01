@@ -4,6 +4,23 @@ Go Commons Pool
 
 http://jolestar.com/go-commons-pool-and-go-concurrent/
 
+notations:
+
+    bm: book mark
+
+====
+
+golang lock
+    sync.RWMutex
+        m.RLock() // read lock, dont block on reads, block if there's write lock
+
+    Runtime with Error
+        panic(errors.New("IllegalStateException"))
+
+
+
+
+
 
 =====
 
