@@ -1,0 +1,9 @@
+menu.js
+  selector: 'performMiniaturize:' #固定用法
+  
+  http://www.opensource.apple.com/source/tcl/tcl-95/tk/tk/macosx/tkMacOSXMenus.c
+
+
+inject-preload.js
+  angular.injector(['ng', 'Services']).invoke(['confFactory', (confFactory) => (constants = confFactory)]);//todo:
+  return angularBootstrapReal.apply(angular, arguments);
