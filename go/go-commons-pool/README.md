@@ -8,6 +8,12 @@ notations:
 
     bm: book mark
 
+Features
+-------
+    BlockDoubleLinkList (双向链表)
+    TimeoutBlockCondition
+    golang unit test
+    
 ====
 
 golang lock

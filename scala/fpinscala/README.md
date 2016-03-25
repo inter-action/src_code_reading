@@ -171,13 +171,25 @@ these are simple sanity checks that the applicative functor works in the way tha
 
     type ~>[F[_], G[_]] = Translate[F,G] // gives us infix syntax `F ~> G` for `Translate[F,G]`
 
+
+这章封装的IO的问题
+>But in practice, we want to use IO directly as little as possible because IO programs tend
+to be monolithic and have limited reuse. In chapter 15, we’ll discuss how to build nicer,
+more composable, more reusable abstractions using essentially the same technique
+that we used here
+
+
 desc:
 
 [Todos]:
 
+如何使用IO2c封装的库
+
 @Monad.scala
 
-  case h #:: t => f(z,h) flatMap (z2 => foldM(t)(z2)(f))
+    case h #:: t => f(z,h) flatMap (z2 => foldM(t)(z2)(f))
+
+section 13.7
 
 
 
@@ -196,6 +208,9 @@ desc:
 
 
 
+#TODOS
+---------
+重读 Par.scala 源码
 
 
 # NOTES

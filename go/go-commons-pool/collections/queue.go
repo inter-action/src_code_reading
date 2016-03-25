@@ -91,9 +91,9 @@ func (q *LinkedBlockingDeque) linkFirst(e interface{}) bool {
 	f := q.first
 	x := newNode(e, nil, f)
 	q.first = x
-	if q.last == nil {//刚初始化才有必要 first==nil && last==nil
+	if q.last == nil { //刚初始化才有必要 first==nil && last==nil
 		q.last = x
-	} else {// if q.last == nil, f == nil
+	} else { // if q.last == nil, f == nil
 		f.prev = x
 	}
 	q.count = q.count + 1
@@ -111,7 +111,7 @@ func (q *LinkedBlockingDeque) linkLast(e interface{}) bool {
 	l := q.last
 	x := newNode(e, l, nil)
 	q.last = x
-	if q.first == nil {// when initialize, dont need to set l.next(cause l is nil)
+	if q.first == nil { // when initialize, dont need to set l.next(cause l is nil)
 		q.first = x
 	} else {
 		l.next = x
@@ -181,7 +181,7 @@ func (q *LinkedBlockingDeque) unlink(x *Node) {
 		n.prev = p
 
 		x.item = nil
-		x.pre =nil
+		x.pre = nil
 		x.next = nil
 		// Don't mess with x's links.  They may still be in use by
 		// an iterator.
@@ -249,8 +249,8 @@ func (q *LinkedBlockingDeque) PutFirst(e interface{}) {
 	}
 	q.lock.Lock()
 	defer q.lock.Unlock()
-	for !q.linkFirst(e) {//block until prepend success
-		q.notFull.Wait()//lock is released here
+	for !q.linkFirst(e) { //block until prepend success
+		q.notFull.Wait() //lock is released here
 	}
 }
 
@@ -497,7 +497,7 @@ type LinkedBlockingDequeIterator struct {
 	next     *Node
 	nextItem interface{}
 	lastRet  *Node
-	desc     bool
+	desc     bool // order, desc or asc
 }
 
 func (iterator *LinkedBlockingDequeIterator) firstNode() *Node {
