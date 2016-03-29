@@ -52,8 +52,11 @@ public class ImageUtil {
         view.setImageURI(Uri.parse("file://" + path));
     }
 
-    /**
+    /*
      * show images in drawables
+
+        android.resource://[package]/[resource_id]
+        android.resource://[package]/[res type]/[res name]
      *
      * @param resId
      * @param view

@@ -101,6 +101,7 @@ public class HomeFragment extends AbsBaseFragment implements IInit, ViewPager.On
             Latest latest = JsonUtil.getEntity(data, Latest.class);
             if (latest != null) {
                 if (latest.top_stories != null) {
+                    // create pager dots
                     group_pagerDots.removeAllViews();
                     for (int i = 0; i < latest.top_stories.size(); i++) {
                         ImageView dot = new ImageView(getActivity());
@@ -109,10 +110,12 @@ public class HomeFragment extends AbsBaseFragment implements IInit, ViewPager.On
                         dot.setLayoutParams(layoutParams);
                         group_pagerDots.addView(dot);
                     }
+                    // set slider views
                     bannerAdapter.updateAll(latest.top_stories);
                     onPageSelected(0);
                 }
 
+                //update list
                 if (latest.stories != null) {
                     List<News> list = new ArrayList<>();
                     News news = new News();
@@ -195,11 +198,11 @@ public class HomeFragment extends AbsBaseFragment implements IInit, ViewPager.On
     public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         int total = totalItemCount - 1;
         int last = view.getLastVisiblePosition();
-        //whether listview reaches bottom
+        //whether listview has reached bottom
         hasScrolledBottom = last == total;
         if (total > 0) {
             News news = newsAdapter.getItem(firstVisibleItem);
-            if (news.type == NewsAdapter.TYPE_LABEL) {
+            if (news.type == NewsAdapter.TYPE_LABEL) {//更改Label的状态
                 ((OnSetTitleListener) (getActivity())).onSetTitle(getNewsLabel(news.date));
             }
         }
@@ -297,12 +300,13 @@ public class HomeFragment extends AbsBaseFragment implements IInit, ViewPager.On
 
             container.addView(view);
             banners.add(view);
-
+            //set image and title
             SimpleDraweeView draweeView = (SimpleDraweeView) view.findViewById(R.id.list_item_banner_img);
             draweeView.setImageURI(Uri.parse(topStory.image));
             TextView tv_title = (TextView) view.findViewById(R.id.list_item_banner_title);
             tv_title.setText(topStory.title);
 
+            // 这listener 的作用就是模拟了一个closure
             view.setOnClickListener(new Listener(topStory));
 
             return view;
@@ -323,6 +327,7 @@ public class HomeFragment extends AbsBaseFragment implements IInit, ViewPager.On
             notifyDataSetChanged();
         }
 
+        //static is better
         private class Listener extends AbsBaseOnItemClickListener<TopStory> {
             public Listener(TopStory data) {
                 super(data);

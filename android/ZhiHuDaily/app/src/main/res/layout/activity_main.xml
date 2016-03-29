@@ -10,6 +10,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <!-- tool bar -->
         <android.support.v7.widget.Toolbar
             android:id="@+id/common_toolbar"
             android:layout_width="match_parent"
@@ -26,6 +27,7 @@
 
     </LinearLayout>
 
+    <!-- just a list view -->
     <include
         layout="@layout/layout_menu"
         android:layout_width="300dp"

@@ -51,6 +51,7 @@ public class SplashActivity extends AbsBaseActivity {
 
             @Override
             public void onAnimationEnd(Animation animation) {
+                // start MainActivity here
                 startActivity(new Intent(SplashActivity.this, MainActivity.class));
                 finish();
             }
@@ -72,7 +73,7 @@ public class SplashActivity extends AbsBaseActivity {
         } else {
             dimen = "320*432";
         }
-        get(Api.URL_SPLASH_IMG + dimen);
+        get(Api.URL_SPLASH_IMG + dimen);// if success onDataOk will be triggered
     }
 
     @Override
@@ -82,7 +83,7 @@ public class SplashActivity extends AbsBaseActivity {
             String img = jsonObject.optString("img");
             String text = jsonObject.optString("text");
 
-            ImageUtil.displayImage(img, sd_splash);
+            ImageUtil.displayImage(img, sd_splash);// 展示的是facebook自定义的view, 这样缓存就关联起来了
             tv_author.setText(text);
 
             sd_splash.startAnimation(animation);
